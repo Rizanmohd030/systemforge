@@ -24,16 +24,17 @@ body {
   color: #22c55e;
   font-family: monospace;
 }
+
 .blueprint-bg {
   position: relative;
   background-color: #0f2e5f;
 
   /* small grid */
   background-image:
-    linear-gradient(rgba(255,255,255,0.08) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,0.08) 1px, transparent 1px),
-    linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+    linear-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px),
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
 
   /* large + small grid spacing */
   background-size:
@@ -43,13 +44,113 @@ body {
     20px 20px;
 }
 
-@keyframes terminal-blink {
+
+/* TERMINAL WINDOW */
+
+.terminal-window {
+  width: min(720px, 90vw);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  background: black;
+  position: relative;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* HEADER */
+
+.terminal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 12px;
+  border-bottom: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.terminal-buttons {
+  display: flex;
+  gap: 6px;
+}
+
+.btn {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.red {
+  background: #ef4444;
+}
+
+.yellow {
+  background: #eab308;
+}
+
+.green {
+  background: #22c55e;
+}
+
+.terminal-title {
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+
+/* BODY */
+
+.terminal-body {
+  padding: 20px;
+  line-height: 1.6;
+  overflow-wrap: break-word;
+  word-break: break-all;
+  white-space: pre-wrap;
+  user-select: none;
+  cursor: default;
+}
+
+
+/* INPUT LINE */
+
+.terminal-input-line {
+  display: flex;
+  align-items: flex-start;
+  margin-top: 10px;
+}
+
+.prompt {
+  margin-right: 0;
+  white-space: nowrap;
+}
+
+.terminal-text {
+  flex: 1;
+  word-break: break-all;
+  overflow-wrap: break-word;
+}
+
+
+/* INPUT */
+
+.terminal-input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #22c55e;
+  caret-color: transparent;
+  font-family: inherit;
+}
+
+
+/* CURSOR */
+
+@keyframes terminalBlink {
   0% {
     opacity: 1;
   }
+
   50% {
     opacity: 0;
   }
+
   100% {
     opacity: 1;
   }
@@ -58,113 +159,24 @@ body {
 .terminal-cursor {
   display: inline-block;
   width: 8px;
-  height: 16px;
+  height: 15px;
   background: #22c55e;
-  margin-left: 4px;
-  animation: terminal-blink 1s infinite;
-}
-/* TERMINAL WINDOW */
-
-.terminal-window{
-  width:720px;
-  border:1px solid rgba(34,197,94,0.3);
-  background:black;
-  position:relative;
-}
-
-/* HEADER */
-
-.terminal-header{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  padding:6px 12px;
-  border-bottom:1px solid rgba(34,197,94,0.3);
-}
-
-.terminal-buttons{
-  display:flex;
-  gap:6px;
-}
-
-.btn{
-  width:10px;
-  height:10px;
-  border-radius:50%;
-}
-
-.red{background:#ef4444;}
-.yellow{background:#eab308;}
-.green{background:#22c55e;}
-
-.terminal-title{
-  font-size:12px;
-  opacity:0.7;
-}
-
-
-/* BODY */
-
-.terminal-body{
-  padding:20px;
-  line-height:1.6;
-}
-
-
-/* INPUT LINE */
-
-.terminal-input-line{
-  display:flex;
-  align-items:center;
-  margin-top:10px;
-}
-
-.prompt{
-  margin-right:6px;
-}
-
-
-/* INPUT */
-
-.terminal-input{
-  background:transparent;
-  border:none;
-  outline:none;
-  color:#22c55e;
-  caret-color:transparent;
-  font-family:inherit;
-}
-
-
-/* CURSOR */
-
-@keyframes terminalBlink{
-  0%{opacity:1;}
-  50%{opacity:0;}
-  100%{opacity:1;}
-}
-
-.terminal-cursor{
-  width:10px;
-  height:18px;
-  background:#22c55e;
-  margin-left:2px;
-  animation:terminalBlink 1s steps(2,start) infinite;
+  margin-left: 2px;
+  vertical-align: middle;
+  animation: terminalBlink 1s steps(2, start) infinite;
 }
 
 
 /* SCANLINES */
 
-.terminal-window::after{
-  content:"";
-  position:absolute;
-  inset:0;
-  background:repeating-linear-gradient(
-    to bottom,
-    rgba(0,0,0,0.25),
-    rgba(0,0,0,0.25) 1px,
-    transparent 1px,
-    transparent 3px
-  );
-  pointer-events:none;
+.terminal-window::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(to bottom,
+      rgba(0, 0, 0, 0.25),
+      rgba(0, 0, 0, 0.25) 1px,
+      transparent 1px,
+      transparent 3px);
+  pointer-events: none;
 }
