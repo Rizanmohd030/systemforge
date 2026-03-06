@@ -1,0 +1,347 @@
+"use client"
+
+import { useState, useEffect, useRef } from "react"
+import { useRouter } from "next/navigation"
+
+// ─── CONSTANTS ────────────────────────────────────────────────────────────────
+
+// Typewriter boot lines shown on page load
+const BOOT_LINES = [
+  "> INITIALIZING SYSTEMFORGE...",
+  "> LOADING AI MODULES...",
+  "> PREPARING BLUEPRINT ENGINE...",
+  "> SYSTEM READY.",
+]
+
+// Quick-fill example prompts shown as buttons below the terminal
+const EXAMPLES = [
+  "AI Resume Analyzer for students",
+  "SaaS Project Management Platform",
+  "AI Customer Support Chatbot",
+]
+
+// ─── MAIN PAGE ────────────────────────────────────────────────────────────────
+
+export default function Home() {
+  const router = useRouter()
+
+  // ── Boot sequence state ───────────────────────────────────────────────────
+  const [bootLines, setBootLines] = useState([])    // fully typed lines
+  const [currentLine, setCurrentLine] = useState("")    // line being typed now
+  const [bootIndex, setBootIndex] = useState(0)     // which BOOT_LINES entry
+  const [charIndex, setCharIndex] = useState(0)     // char position in current line
+  const [bootComplete, setBootComplete] = useState(false) // all lines done
+
+  // ── Input / idea state ───────────────────────────────────────────────────
+  const [idea, setIdea] = useState("")    // text the user has typed
+  const [cursorPos, setCursorPos] = useState(0)  // character index of the caret
+  const [isSubmitting, setIsSubmitting] = useState(false) // transition phase
+
+  // ── Refs ──────────────────────────────────────────────────────────────────
+  // The actual <input> element – invisible but receives all keyboard events.
+  // We sync its value/selection into React state for visual rendering.
+  const inputRef = useRef(null)
+  const beforeRef = useRef(null)  // span holding text before cursor
+  const afterRef = useRef(null)  // span holding text after cursor
+
+
+  // ── BOOT ANIMATION ────────────────────────────────────────────────────────
+  // Each render tick either adds one character or, when the line is done,
+  // commits it and advances to the next BOOT_LINES entry.
+  useEffect(() => {
+    if (bootIndex >= BOOT_LINES.length) {
+      setBootComplete(true)
+      return
+    }
+
+    const line = BOOT_LINES[bootIndex]
+
+    if (charIndex < line.length) {
+      // Type one character every 28 ms → ~2-3 s total
+      const t = setTimeout(() => {
+        setCurrentLine(prev => prev + line[charIndex])
+        setCharIndex(prev => prev + 1)
+      }, 28)
+      return () => clearTimeout(t)
+    } else {
+      // Line complete – pause 180 ms then start next line
+      const t = setTimeout(() => {
+        setBootLines(prev => [...prev, currentLine])
+        setCurrentLine("")
+        setCharIndex(0)
+        setBootIndex(prev => prev + 1)
+      }, 180)
+      return () => clearTimeout(t)
+    }
+  }, [charIndex, bootIndex])
+
+
+  // ── AUTO-FOCUS after boot ─────────────────────────────────────────────────
+  // Once the boot sequence completes, give focus to the hidden input so the
+  // user can start typing without clicking first.
+  useEffect(() => {
+    if (bootComplete && inputRef.current) {
+      inputRef.current.focus()
+    }
+  }, [bootComplete])
+
+
+  // ── SYNC VALUE + CURSOR ───────────────────────────────────────────────────
+  // Reads selectionStart from the native input and pushes it into state so
+  // the visual cursor block updates on every keystroke / mouse click.
+  const syncFromInput = () => {
+    const el = inputRef.current
+    if (!el) return
+    setIdea(el.value)
+    setCursorPos(el.selectionStart ?? el.value.length)
+  }
+
+
+  // ── ENTER KEY → submit idea ───────────────────────────────────────────────
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault()
+      const value = inputRef.current?.value?.trim()
+      if (!value || isSubmitting) return
+
+      // Persist idea for the blueprint page
+      localStorage.setItem("systemforge_idea", value)
+
+      // Show transition messages, then navigate after 1.2 s
+      setIsSubmitting(true)
+      setTimeout(() => router.push("/blueprint"), 1200)
+      return
+    }
+    // Let the browser handle all other keys, then sync state
+    setTimeout(syncFromInput, 0)
+  }
+
+
+  // ── CLICK-TO-POSITION ─────────────────────────────────────────────────────
+  // Converts a mouse click inside the terminal text into a character offset,
+  // moves the hidden input's caret there, then syncs the visual cursor.
+  const handleTextClick = (e) => {
+    e.stopPropagation()
+
+    let clickNode = null, clickOffset = 0
+    if (document.caretRangeFromPoint) {
+      const r = document.caretRangeFromPoint(e.clientX, e.clientY)
+      if (r) { clickNode = r.startContainer; clickOffset = r.startOffset }
+    } else if (document.caretPositionFromPoint) {
+      const cp = document.caretPositionFromPoint(e.clientX, e.clientY)
+      if (cp) { clickNode = cp.offsetNode; clickOffset = cp.offset }
+    }
+
+    let pos = idea.length
+    if (clickNode) {
+      if (beforeRef.current?.contains(clickNode)) {
+        pos = clickOffset
+      } else if (afterRef.current?.contains(clickNode)) {
+        pos = cursorPos + clickOffset
+      }
+    }
+
+    const el = inputRef.current
+    if (el) {
+      el.focus()
+      el.setSelectionRange(pos, pos)
+      setTimeout(syncFromInput, 0)
+    }
+  }
+
+  // Clicking anywhere on the terminal wrapper focuses the hidden input
+  const handleTerminalClick = () => {
+    inputRef.current?.focus()
+    setTimeout(syncFromInput, 0)
+  }
+
+  // ── EXAMPLE BUTTON FILL ───────────────────────────────────────────────────
+  // Fills the hidden input with the example text and syncs visual state.
+  const fillExample = (text) => {
+    const el = inputRef.current
+    if (!el) return
+    el.value = text
+    el.focus()
+    el.setSelectionRange(text.length, text.length)
+    syncFromInput()
+  }
+
+
+  // ── DERIVE VISUAL HALVES ──────────────────────────────────────────────────
+  // The terminal cursor sits between `before` and `after`; the blinking block
+  // element is rendered between them so it mirrors the real caret exactly.
+  const before = idea.slice(0, cursorPos)
+  const after = idea.slice(cursorPos)
+
+
+  // ─── RENDER ───────────────────────────────────────────────────────────────
+  return (
+    <main
+      className="h-screen bg-black flex items-center justify-center font-mono text-green-400"
+      onClick={handleTerminalClick}
+    >
+
+      {/* ── HIDDEN NATIVE INPUT ─────────────────────────────────────────────
+          Invisible but always focusable – the browser handles all text
+          editing natively. We only read its value/selectionStart for display. */}
+      <input
+        ref={inputRef}
+        value={idea}
+        onChange={syncFromInput}
+        onKeyDown={handleKeyDown}
+        onKeyUp={syncFromInput}
+        onClick={syncFromInput}
+        onSelect={syncFromInput}
+        disabled={isSubmitting}
+        style={{ position: "fixed", opacity: 0, pointerEvents: "none", width: 0, height: 0, border: "none", outline: "none", padding: 0 }}
+        spellCheck={false}
+        autoComplete="off"
+        autoCorrect="off"
+        autoCapitalize="off"
+      />
+
+      {/* ── TERMINAL WINDOW ─────────────────────────────────────────────────── */}
+      <div className="terminal-window">
+
+        {/* Traffic-light header */}
+        <div className="terminal-header">
+          <div className="terminal-buttons">
+            <span className="btn red" />
+            <span className="btn yellow" />
+            <span className="btn green" />
+          </div>
+          <span className="terminal-title">bash — systemforge</span>
+        </div>
+
+        <div className="terminal-body">
+
+          {/* ── BOOT LINES ────────────────────────────────────────────────── */}
+          {bootLines.map((line, i) => <p key={i}>{line}</p>)}
+          {currentLine && <p>{currentLine}</p>}
+
+          {/* ── POST-BOOT CONTENT ─────────────────────────────────────────── */}
+          {bootComplete && !isSubmitting && (
+            <>
+              {/* Product description */}
+              <ProductDescription />
+
+              {/* Prompt guidance */}
+              <PromptGuide />
+
+              {/* Terminal input line */}
+              <div className="terminal-input-line">
+                <span className="prompt" style={{ whiteSpace: "nowrap" }}>
+                  user@systemforge:~&nbsp;
+                </span>
+
+                {/* Visual text: before cursor ▌ after cursor */}
+                <span className="terminal-text" onClick={handleTextClick} style={{ cursor: "text" }}>
+                  <span ref={beforeRef}>{before}</span>
+                  <span className="terminal-cursor" />
+                  <span ref={afterRef}>{after}</span>
+                </span>
+              </div>
+
+              {/* Enter hint */}
+              <EnterHint />
+
+              {/* Quick-fill example buttons */}
+              <ExampleButtons onSelect={fillExample} />
+            </>
+          )}
+
+          {/* ── SUBMISSION TRANSITION MESSAGES ──────────────────────────── */}
+          {isSubmitting && (
+            <>
+              <p className="mt-4 text-green-300">&gt; ANALYZING IDEA...</p>
+              <p className="text-green-300">&gt; LOADING BLUEPRINT WORKSPACE...</p>
+              <span className="terminal-cursor" style={{ marginTop: 8, display: "inline-block" }} />
+            </>
+          )}
+
+        </div>
+      </div>
+    </main>
+  )
+}
+
+
+// ─── SUB-COMPONENTS ───────────────────────────────────────────────────────────
+
+/**
+ * One-liner product description shown below the boot sequence.
+ * Kept subtle (opacity) so it doesn't compete with the input prompt.
+ */
+function ProductDescription() {
+  return (
+    <p className="mt-4 mb-1 opacity-50 text-xs leading-relaxed">
+      SystemForge converts your idea into a complete system blueprint —{" "}
+      architecture diagrams, tech stack recommendations, and a build guide.
+    </p>
+  )
+}
+
+/**
+ * Short guidance panel helping users write a good idea prompt.
+ * Visually separated from the terminal input by a faint border-top.
+ */
+function PromptGuide() {
+  return (
+    <div className="mt-3 mb-4 border-t border-green-900 pt-3">
+      <p className="text-xs opacity-60 mb-1">Describe your system clearly. Good prompts include:</p>
+      <ul className="text-xs opacity-50 list-none space-y-0.5 pl-2">
+        <li>• What the system does</li>
+        <li>• Who the users are</li>
+        <li>• Key features</li>
+      </ul>
+      <p className="text-xs opacity-40 mt-2">
+        e.g. "Build an AI resume analyzer for students"
+      </p>
+    </div>
+  )
+}
+
+/**
+ * Small helper text below the input reminding users to press Enter.
+ */
+function EnterHint() {
+  return (
+    <p className="mt-3 text-xs opacity-40">
+      Press <span className="opacity-80 text-green-400">Enter</span> to generate the system blueprint.
+    </p>
+  )
+}
+
+/**
+ * Row of quick-fill buttons that populate the terminal input with
+ * a single click, letting users try SystemForge without typing.
+ *
+ * Props:
+ *   onSelect(text) – called with the example string when a button is clicked
+ */
+function ExampleButtons({ onSelect }) {
+  return (
+    <div className="mt-4 flex flex-wrap gap-2" onClick={e => e.stopPropagation()}>
+      {EXAMPLES.map(ex => (
+        <button
+          key={ex}
+          onClick={() => onSelect(ex)}
+          style={{
+            background: "transparent",
+            border: "1px solid rgba(34,197,94,0.35)",
+            color: "rgba(34,197,94,0.7)",
+            padding: "4px 10px",
+            fontSize: "11px",
+            fontFamily: "monospace",
+            cursor: "pointer",
+            borderRadius: "2px",
+          }}
+          onMouseEnter={e => e.currentTarget.style.borderColor = "rgba(34,197,94,0.8)"}
+          onMouseLeave={e => e.currentTarget.style.borderColor = "rgba(34,197,94,0.35)"}
+        >
+          [ {ex} ]
+        </button>
+      ))}
+    </div>
+  )
+}
