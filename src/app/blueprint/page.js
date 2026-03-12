@@ -2,6 +2,8 @@
 
 import { useEffect, useState, useRef } from "react"
 import IdeaRefinement from "@/components/IdeaRefinement"
+import WorkflowMap from "@/components/WorkflowMap"
+import { EVENTS, KEYS } from "@/lib/context"
 
 // ─── COLORS ───────────────────────────────────────────────────────────────────
 const C = {
@@ -27,7 +29,7 @@ const MODULES = [
     id: "workflow", code: "02", label: "WORKFLOW MAP",
     description: "Generates step-by-step user flows and interaction diagrams for your full product.",
     detail: ["User Onboarding", "Core Actions", "Edge Cases", "Exit Paths"],
-    status: "COMING SOON",
+    status: "READY",
     pos: { x: 57, y: 19 }, width: 248,
   },
   {
@@ -64,10 +66,24 @@ const HUB = { x: 50, y: 50 }
 export default function BlueprintPage() {
   const [idea, setIdea] = useState("")
   const [activeModule, setActiveModule] = useState(null)
+  const [isRefined, setIsRefined] = useState(false)
+
+  const checkRefinement = () => {
+    if (typeof window !== "undefined") {
+      const refined = localStorage.getItem(KEYS.REFINED)
+      setIsRefined(!!refined)
+    }
+  }
 
   useEffect(() => {
-    const stored = localStorage.getItem("systemforge_idea")
+    const stored = localStorage.getItem(KEYS.RAW)
     if (stored) setIdea(stored)
+
+    checkRefinement()
+
+    const onUpdate = () => checkRefinement()
+    window.addEventListener(EVENTS.UPDATED, onUpdate)
+    return () => window.removeEventListener(EVENTS.UPDATED, onUpdate)
   }, [])
 
   return (
@@ -96,12 +112,21 @@ export default function BlueprintPage() {
           &gt; SYSTEMFORGE BLUEPRINT
         </h1>
         <p style={{ fontSize: "9px", color: C.whiteLow, marginTop: "3px", letterSpacing: "0.06em" }}>
-          RAW IDEA: {idea}
+          RAW IDEA: {idea} {isRefined && <span style={{ color: C.ready }}> (REFINED ✓)</span>}
         </p>
       </div>
 
       {!activeModule ? (
-        <HubDiagram modules={MODULES} onSelect={mod => { if (mod.status === "READY") setActiveModule(mod.id) }} />
+        <HubDiagram 
+          modules={MODULES.map(m => {
+            // Apply refined status to READY modules
+            if (m.status === "READY" && isRefined) {
+              return { ...m, status: "REFINED" }
+            }
+            return m
+          })} 
+          onSelect={mod => { if (mod.status === "READY" || mod.status === "REFINED") setActiveModule(mod.id) }} 
+        />
       ) : (
         <div style={{ maxWidth: "860px", margin: "0 auto", padding: "80px 60px 80px 80px", position: "relative", zIndex: 10 }}>
           <ModulePanel
@@ -374,6 +399,7 @@ function ModulePanel({ module, idea, onBack }) {
         // {module.code} — {module.label}
       </p>
       {module.id === "refinement" && idea && <IdeaRefinement rawIdea={idea} />}
+      {module.id === "workflow" && <WorkflowMap productDetails={idea} />}
     </div>
   )
 }

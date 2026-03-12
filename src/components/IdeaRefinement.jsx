@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import { refineIdea } from "@/lib/gemini"
+import { saveRefinedConcept, KEYS } from "@/lib/context"
 
 // ─── COLORS (blueprint palette) ───────────────────────────────────────────────
 const C = {
@@ -62,9 +63,16 @@ export default function IdeaRefinement({ rawIdea }) {
     const [feedback, setFeedback] = useState("")
     const [isMock, setIsMock] = useState(false)
     const [iteration, setIteration] = useState(0)
+    const [isSaved, setIsSaved] = useState(false)
     const hasRun = useRef(false)
 
     useEffect(() => {
+        // Check if already saved
+        if (typeof window !== "undefined") {
+            const saved = localStorage.getItem(KEYS.REFINED)
+            if (saved) setIsSaved(true)
+        }
+
         if (hasRun.current) return
         hasRun.current = true
         if (rawIdea) handleRefine()
@@ -80,9 +88,12 @@ export default function IdeaRefinement({ rawIdea }) {
             setIteration(prev => prev + 1)
         } catch (err) {
             const isQuota = err?.message?.includes("429") || err?.message?.includes("quota")
-            if (isQuota) {
+            const isBusy = err?.message?.includes("503") || err?.message?.includes("demand")
+            
+            if (isQuota || isBusy) {
                 setRefined(MOCK_RESULT(rawIdea))
                 setIsMock(true)
+                if (isBusy) setError("Gemini is currently busy. Showing simulated concept.")
             } else {
                 setError("Failed to reach Gemini. Check your API key.")
                 console.error(err)
@@ -90,6 +101,12 @@ export default function IdeaRefinement({ rawIdea }) {
         } finally {
             setIsLoading(false)
         }
+    }
+
+    const handleSave = () => {
+        if (!refined) return
+        saveRefinedConcept(refined)
+        setIsSaved(true)
     }
 
     const handleFeedbackSubmit = () => {
@@ -163,11 +180,35 @@ export default function IdeaRefinement({ rawIdea }) {
             {refined && !isLoading && (
                 <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
 
-                    {iteration > 1 && (
-                        <p style={{ fontSize: "10px", color: C.whiteLow, letterSpacing: "0.06em" }}>
-              // ITERATION {iteration} — REFINED WITH FEEDBACK
-                        </p>
-                    )}
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: "4px" }}>
+                        <div>
+                            {iteration > 1 && (
+                                <p style={{ fontSize: "10px", color: C.whiteLow, letterSpacing: "0.06em", marginBottom: "4px" }}>
+                                    // ITERATION {iteration} — REFINED WITH FEEDBACK
+                                </p>
+                            )}
+                            <p style={{ fontSize: "10px", color: isSaved ? C.ready : C.accent, letterSpacing: "0.1em", fontWeight: "bold", margin: 0 }}>
+                                {isSaved ? "✓ CONCEPT SAVED TO BLUEPRINT" : "// CONCEPT READY FOR BLUEPRINT"}
+                            </p>
+                        </div>
+                        <button
+                            onClick={handleSave}
+                            disabled={isSaved || isLoading}
+                            style={{
+                                background: isSaved ? "rgba(100,220,255,0.1)" : "rgba(100,220,255,0.25)",
+                                border: `1px solid ${isSaved ? C.ready : "rgba(255,255,255,0.4)"}`,
+                                color: isSaved ? C.ready : C.white,
+                                padding: "6px 14px",
+                                fontSize: "11px",
+                                cursor: isSaved ? "default" : "pointer",
+                                fontFamily: "monospace",
+                                letterSpacing: "0.05em",
+                                transition: "all 0.15s",
+                            }}
+                        >
+                            {isSaved ? "[ SAVED ]" : "[ SAVE CONCEPT ]"}
+                        </button>
+                    </div>
 
                     <ResultCard label="PRODUCT NAME" value={refined.productName} />
                     <ResultCard label="DESCRIPTION" value={refined.description} />
