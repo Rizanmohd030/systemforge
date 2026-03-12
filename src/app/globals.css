@@ -27,22 +27,24 @@ body {
 
 .blueprint-bg {
   position: relative;
-  background-color: #0f2e5f;
+  background-color: #1044a8;
 
-  /* small grid */
+  /* subtle radial depth — lighter center, darker corners */
   background-image:
-    linear-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px),
-    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    radial-gradient(ellipse at 50% 50%, rgba(30, 80, 200, 0.45) 0%, rgba(8, 25, 80, 0.85) 100%),
+    linear-gradient(rgba(255, 255, 255, 0.13) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.13) 1px, transparent 1px),
+    linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
 
-  /* large + small grid spacing */
   background-size:
+    100% 100%,
     80px 80px,
     80px 80px,
     20px 20px,
     20px 20px;
 }
+
 
 
 /* TERMINAL WINDOW */
