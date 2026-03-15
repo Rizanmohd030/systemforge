@@ -6,6 +6,7 @@ import WorkflowMap from "@/components/WorkflowMap"
 import TechStack from "@/components/TechStack"
 import SystemArchitecture from "@/components/SystemArchitecture"
 import BuildRoadmap from "@/components/BuildRoadmap"
+import PromptBuilder from "@/components/PromptBuilder"
 import { EVENTS, KEYS } from "@/lib/context"
 
 // ─── COLORS ───────────────────────────────────────────────────────────────────
@@ -57,10 +58,10 @@ const MODULES = [
     pos: { x: 18, y: 75 }, width: 245,
   },
   {
-    id: "schema", code: "06", label: "DATA SCHEMA",
-    description: "Drafts the core database schema with tables, fields, and relationships.",
-    detail: ["Tables", "Relationships", "Indexes", "Migrations"],
-    status: "COMING SOON",
+    id: "promptbuilder", code: "06", label: "PROMPT BUILDER",
+    description: "Synthesizes your blueprint into a master prompt for AI IDEs.",
+    detail: ["Target IDEs", "Architecture Rules", "Context Injection", "Instruction Set"],
+    status: "READY",
     pos: { x: 62, y: 67 }, width: 235,
   },
 ]
@@ -408,6 +409,7 @@ function ModulePanel({ module, idea, onBack }) {
       {module.id === "techstack" && <TechStack productDetails={idea} />}
       {module.id === "architecture" && <SystemArchitecture productDetails={idea} />}
       {module.id === "roadmap" && <BuildRoadmap productDetails={idea} />}
+      {module.id === "promptbuilder" && <PromptBuilder productDetails={idea} />}
     </div>
   )
 }

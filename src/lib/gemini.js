@@ -174,3 +174,32 @@ Format ONLY as a JSON array. Do not include \`\`\`json wrappers.
 
     return await callGemini(prompt, bustCache)
 }
+
+// ─── PROMPT BUILDER ────────────────────────────────────────────────────────────
+
+export async function generateMasterPrompt(productDetails, aiTarget = "Cursor", feedback = "", bustCache = false) {
+    const prompt = `
+You are an expert AI Prompt Engineer and Technical Architect.
+
+Instead of writing one massive prompt, break down the development of this product concept into 3-4 highly specific, sequential architectural phases. 
+For example: Phase 1 (Data & Auth), Phase 2 (Core Business Logic), Phase 3 (Frontend & UI), etc.
+
+Product Concept:
+"${JSON.stringify(productDetails)}"
+
+${feedback ? `Additional context from the user: "${feedback}"` : ""}
+
+For each phase, write the EXACT "Super Prompt" the user should copy and paste into their AI coding assistant. The user will be copy-pasting your exact strings.
+The prompt itself should include instructions to the AI regarding its @Role, @Context, @Tech_Stack, and explicit @Initial_Instructions for that specific phase.
+
+Return ONLY a JSON array. Do not include markdown wrappers (like \`\`\`json).
+
+Each object in the array MUST have:
+- "phaseName": string (e.g. "Phase 1: Foundation & Database")
+- "targetAi": string (A recommendation, e.g. "Cursor Composer" or "ChatGPT o1 for planning")
+- "pasteInstructions": string (e.g. "Open a new Composer chat and paste this exact prompt to scaffold the initial architecture.")
+- "promptText": string (The actual, highly-professional prompt text for the AI. Use \\n for newlines within the string.)
+`.trim()
+
+    return await callGemini(prompt, bustCache)
+}
