@@ -44,7 +44,7 @@ TARGET_USERS: [comma separated list]
 CORE_FEATURES: [comma separated list of 4-6 features]
 `.trim()
 
-
+    return await callGemini(prompt, bustCache)
 }
 
 // ─── WORKFLOW MAP ─────────────────────────────────────────────────────────────
@@ -88,6 +88,88 @@ Example JSON Structure:
     { "id": "e1", "source": "start", "target": "signup" }
   ]
 }
+`.trim()
+
+    return await callGemini(prompt, bustCache)
+}
+
+// ─── TECH STACK ANALYSIS ──────────────────────────────────────────────────────
+
+export async function analyzeTechStack(productDetails, feedback = "", bustCache = false) {
+    const prompt = `
+You are a senior solution architect. 
+
+Analyze and recommend a modern technology stack for this product:
+"${JSON.stringify(productDetails)}"
+
+${feedback ? `User feedback/constraints: "${feedback}"` : ""}
+
+Produce an ultra-concise analysis for a visual dashboard. Each section MUST be exactly one line.
+
+FRONTEND: [Recommendation + 1-2 words on why, e.g. Next.js (SEO & Speed)]
+BACKEND: [Recommendation + 1-2 words on why, e.g. Supabase (Unified Auth/DB)]
+MOTIVE: [The core reason this stack fits the product in one sentence.]
+ALTERNATIVE: [1-2 words for a different path, e.g. MERN (Custom Control)]
+TRADE_OFF: [The biggest downside of the main stack in one sentence.]
+
+Use the section markers exactly as written above. No extra text.
+`.trim()
+
+    return await callGemini(prompt, bustCache)
+}
+
+// ─── SYSTEM ARCHITECTURE ──────────────────────────────────────────────────────
+
+export async function generateSystemArchitecture(productDetails, feedback = "", bustCache = false) {
+    const prompt = `
+You are a senior software architect.
+
+Generate a System Architecture and Product Requirement Document (PRD) for the following product concept:
+"${JSON.stringify(productDetails)}"
+
+${feedback ? `User feedback/constraints: "${feedback}"` : ""}
+
+Return ONLY a JSON object with two top-level keys: "prd" and "architecture". No markdown formatting around the JSON.
+
+"prd" should be an object with:
+- "problemStatement": string
+- "targetUsers": array of strings
+- "coreFeatures": array of strings
+- "successMetrics": array of strings
+
+"architecture" should be an object compatible with React Flow, representing the system architecture diagram. 
+It must contain "nodes" and "edges" arrays.
+Layers (Frontend, Backend, Database) can be represented. Keep it high-level but specific to the product requirements.
+- Nodes must have: id, type: "default", position: {x, y}, data: { label: "Layer/Service Name"}.
+- Edges must have: id, source, target.
+
+Format ONLY as JSON. Do not include \`\`\`json wrappers.
+`.trim()
+
+    return await callGemini(prompt, bustCache)
+}
+
+// ─── BUILD ROADMAP ────────────────────────────────────────────────────────────
+
+export async function generateBuildRoadmap(productDetails, feedback = "", bustCache = false) {
+    const prompt = `
+You are a senior technical project manager and lead developer.
+
+Generate a visual development roadmap that guides the developer from project setup to deployment for the following product concept:
+"${JSON.stringify(productDetails)}"
+
+${feedback ? `User feedback/constraints: "${feedback}"` : ""}
+
+Return ONLY a JSON array of stage objects. No markdown formatting around the JSON.
+
+Each stage object must have:
+- "stage": string (e.g. "Project Initialization", "Core Development")
+- "description": string (one sentence description)
+- "tasks": array of strings (specific sub-tasks)
+- "commands": array of strings (terminal commands to run, e.g. "npx create-next-app@latest .")
+- "aiPrompt": string (An optional, highly specific AI prompt the user can copy to generate the code for this stage in an IDE like Cursor/zeal)
+
+Format ONLY as a JSON array. Do not include \`\`\`json wrappers.
 `.trim()
 
     return await callGemini(prompt, bustCache)

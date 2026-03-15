@@ -3,6 +3,9 @@
 import { useEffect, useState, useRef } from "react"
 import IdeaRefinement from "@/components/IdeaRefinement"
 import WorkflowMap from "@/components/WorkflowMap"
+import TechStack from "@/components/TechStack"
+import SystemArchitecture from "@/components/SystemArchitecture"
+import BuildRoadmap from "@/components/BuildRoadmap"
 import { EVENTS, KEYS } from "@/lib/context"
 
 // ─── COLORS ───────────────────────────────────────────────────────────────────
@@ -36,20 +39,22 @@ const MODULES = [
     id: "techstack", code: "03", label: "TECH STACK",
     description: "Recommends the ideal stack based on your requirements and constraints.",
     detail: ["Frontend", "Backend", "Database", "Infra & CI/CD"],
-    status: "COMING SOON",
+    status: "READY",
     pos: { x: 7, y: 46 }, width: 238,
   },
   {
     id: "architecture", code: "04", label: "SYSTEM ARCHITECTURE",
-    description: "Designs services and APIs.",
-    detail: null, status: "COMING SOON",
-    pos: { x: 68, y: 44 }, width: 188,
+    description: "Generates your PRD and architectural system diagram.",
+    detail: ["Problem Statement", "Core Features", "System Layers", "Data Flow"],
+    status: "READY",
+    pos: { x: 72, y: 42 }, width: 238,
   },
   {
     id: "roadmap", code: "05", label: "BUILD ROADMAP",
-    description: "Milestones and sprint deliverables.",
-    detail: null, status: "COMING SOON",
-    pos: { x: 21, y: 68 }, width: 185,
+    description: "Generates an actionable, step-by-step development sprint roadmap.",
+    detail: ["Milestones", "Tasks", "Terminal Commands", "AI Prompts"],
+    status: "READY",
+    pos: { x: 18, y: 75 }, width: 245,
   },
   {
     id: "schema", code: "06", label: "DATA SCHEMA",
@@ -400,6 +405,9 @@ function ModulePanel({ module, idea, onBack }) {
       </p>
       {module.id === "refinement" && idea && <IdeaRefinement rawIdea={idea} />}
       {module.id === "workflow" && <WorkflowMap productDetails={idea} />}
+      {module.id === "techstack" && <TechStack productDetails={idea} />}
+      {module.id === "architecture" && <SystemArchitecture productDetails={idea} />}
+      {module.id === "roadmap" && <BuildRoadmap productDetails={idea} />}
     </div>
   )
 }

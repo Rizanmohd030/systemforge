@@ -1,0 +1,76 @@
+
+> systemforge@0.1.0 lint
+> eslint
+
+
+C:\Users\rizan\Documents\Workspace\systemforge\src\app\blueprint\page.js
+   85:17   error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  83 |   useEffect(() => {
+  84 |     const stored = localStorage.getItem(KEYS.RAW)
+> 85 |     if (stored) setIdea(stored)
+     |                 ^^^^^^^ Avoid calling setState() directly within an effect
+  86 |
+  87 |     checkRefinement()
+  88 |  react-hooks/set-state-in-effect
+  187:6    warning  React Hook useEffect has a missing dependency: 'computeLines'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             react-hooks/exhaustive-deps
+  248:10   error    Comments inside children section of tag should be placed inside braces                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      react/jsx-no-comment-textnodes
+  403:105  error    Comments inside children section of tag should be placed inside braces                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      react/jsx-no-comment-textnodes
+
+C:\Users\rizan\Documents\Workspace\systemforge\src\app\page.js
+   47:7    error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  45 |   useEffect(() => {
+  46 |     if (bootIndex >= BOOT_LINES.length) {
+> 47 |       setBootComplete(true)
+     |       ^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  48 |       return
+  49 |     }
+  50 |     const line = BOOT_LINES[bootIndex]  react-hooks/set-state-in-effect
+   66:6    warning  React Hook useEffect has a missing dependency: 'currentLine'. Either include it or remove the dependency array. You can also replace multiple useState variables with useReducer if 'setBootLines' needs the current value of 'currentLine'                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       react-hooks/exhaustive-deps
+  254:101  error    Comments inside children section of tag should be placed inside braces                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            react/jsx-no-comment-textnodes
+  267:102  error    Comments inside children section of tag should be placed inside braces                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            react/jsx-no-comment-textnodes
+  283:102  error    Comments inside children section of tag should be placed inside braces                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            react/jsx-no-comment-textnodes
+
+C:\Users\rizan\Documents\Workspace\systemforge\src\components\BuildRoadmap.jsx
+  110:8    warning  React Hook useEffect has a missing dependency: 'handleGenerate'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  127:105  error    Comments inside children section of tag should be placed inside braces                                             react/jsx-no-comment-textnodes
+  199:149  error    Comments inside children section of tag should be placed inside braces                                             react/jsx-no-comment-textnodes
+  235:159  error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                                                    react/no-unescaped-entities
+  235:176  error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                                                    react/no-unescaped-entities
+
+C:\Users\rizan\Documents\Workspace\systemforge\src\components\IdeaRefinement.jsx
+   79:8    warning  React Hook useEffect has missing dependencies: 'handleRefine' and 'rawIdea'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+  129:114  error    Comments inside children section of tag should be placed inside braces                                                           react/jsx-no-comment-textnodes
+  186:130  error    Comments inside children section of tag should be placed inside braces                                                           react/jsx-no-comment-textnodes
+  226:123  error    Comments inside children section of tag should be placed inside braces                                                           react/jsx-no-comment-textnodes
+
+C:\Users\rizan\Documents\Workspace\systemforge\src\components\SystemArchitecture.jsx
+  140:8    warning  React Hook useEffect has a missing dependency: 'handleGenerate'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  149:109  error    Comments inside children section of tag should be placed inside braces                                             react/jsx-no-comment-textnodes
+  199:107  error    Comments inside children section of tag should be placed inside braces                                             react/jsx-no-comment-textnodes
+
+C:\Users\rizan\Documents\Workspace\systemforge\src\components\TechStack.jsx
+   83:8    warning  React Hook useEffect has a missing dependency: 'handleAnalyze'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  113:123  error    Comments inside children section of tag should be placed inside braces                                            react/jsx-no-comment-textnodes
+  140:124  error    Comments inside children section of tag should be placed inside braces                                            react/jsx-no-comment-textnodes
+  145:122  error    Comments inside children section of tag should be placed inside braces                                            react/jsx-no-comment-textnodes
+
+C:\Users\rizan\Documents\Workspace\systemforge\src\components\WorkflowMap.jsx
+  130:8    warning  React Hook useEffect has a missing dependency: 'handleGenerate'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  137:103  error    Comments inside children section of tag should be placed inside braces                                             react/jsx-no-comment-textnodes
+
+Γ£û 27 problems (20 errors, 7 warnings)
+
