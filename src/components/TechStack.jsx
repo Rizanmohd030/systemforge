@@ -21,28 +21,35 @@ const C = {
     cardBorder: "rgba(255,255,255,0.18)",
 }
 
-// ─── PARSER ───────────────────────────────────────────────────────────────────
-function parseTechStackAnalysis(text) {
-    const sections = ["FRONTEND", "BACKEND", "MOTIVE", "ALTERNATIVE", "TRADE_OFF"]
-    const result = {}
-    sections.forEach((s, i) => {
-        const next = sections[i + 1]
-        const regex = next 
-            ? new RegExp(`${s}:\\s*([\\s\\S]*?)(?=${next}:)`, "i")
-            : new RegExp(`${s}:\\s*([\\s\\S]*)`, "i")
-        const match = text.match(regex)
-        result[s] = match ? match[1].trim() : "TBD"
-    })
-    return result
-}
-
-// ─── MOCK ─────────────────────────────────────────────────────────────────────
+// No longer need manual regex parsing!
 const MOCK_RESULT = {
-    FRONTEND: "Next.js (React Framework)",
-    BACKEND: "Supabase (PostgreSQL + Auth)",
-    MOTIVE: "Optimized for lightning-fast MVP development and seamless scalability.",
-    ALTERNATIVE: "MERN Stack (Extra control)",
-    TRADE_OFF: "Increased dependency on specialized BaaS providers."
+    recommendations: [
+        {
+            stackName: "Modern T3-Lite Stack",
+            frontend: "Next.js (App Router)",
+            backend: "Next.js (Server Actions)",
+            database: "Supabase (PostgreSQL)",
+            whyPreferred: "Extreme development speed with a unified codebase and built-in auth.",
+            isPrimary: true
+        },
+        {
+            stackName: "Modern MERN Stack",
+            frontend: "React + Vite",
+            backend: "Node.js (Express)",
+            database: "MongoDB Atlas",
+            whyPreferred: "Ideal for unstructured data and high-concurrency document processing.",
+            isPrimary: false
+        },
+        {
+            stackName: "FastAPI Powerhouse",
+            frontend: "React + Tailwind",
+            backend: "Python (FastAPI)",
+            database: "PostgreSQL",
+            whyPreferred: "Best for heavy computational logic or AI-integrated features.",
+            isPrimary: false
+        }
+    ],
+    summaryMotive: "Balancing scalability requirements with developer productivity for an early-stage MVP."
 }
 
 // ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
@@ -66,11 +73,20 @@ export default function TechStack({ productDetails }) {
         const specToSearch = ctx.type === "refined" ? ctx.data : productDetails
 
         try {
-            const rawResponse = await analyzeTechStack(specToSearch, feedbackText, bust)
-            setAnalysis(parseTechStackAnalysis(rawResponse))
+            const res = await fetch("/api/langchain/stack", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ productDetails: specToSearch, feedback: feedbackText }),
+            })
+            
+            if (!res.ok) throw new Error("Failed to fetch tech stack")
+            
+            const data = await res.json()
+            setAnalysis(data)
         } catch (err) {
+            console.error("TechStack error:", err)
             setAnalysis(MOCK_RESULT)
-            setError(err?.message?.includes("quota") ? "" : "Falling back to safe defaults.")
+            setError("Falling back to safe defaults.")
         } finally {
             setIsLoading(false)
         }
@@ -99,56 +115,66 @@ export default function TechStack({ productDetails }) {
                     <div className="loading-pulse" style={{ width: "100%", height: "2px", background: `linear-gradient(90deg, transparent, ${C.accent}, transparent)`, marginTop: "20px" }} />
                 </div>
             ) : analysis ? (
-                <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
                     
-                    {/* HERO STACK */}
-                    <div style={{
-                        background: "rgba(20,60,160,0.25)",
-                        border: `1px solid ${C.ready}`,
-                        padding: "30px",
-                        position: "relative",
-                        overflow: "hidden"
-                    }}>
-                        <div style={{ position: "relative", zIndex: 2 }}>
-                            <p style={{ fontSize: "10px", color: C.ready, letterSpacing: "0.2em", marginBottom: "15px" }}>// RECOMMENDED BLUEPRINT</p>
-                            <div style={{ display: "flex", alignItems: "center", gap: "20px", marginBottom: "20px" }}>
-                                <div style={{ flex: 1 }}>
-                                    <p style={{ fontSize: "9px", color: C.whiteLow, marginBottom: "4px" }}>FRONTEND</p>
-                                    <h2 style={{ fontSize: "24px", color: C.white, margin: 0, letterSpacing: "0.05em" }}>{analysis.FRONTEND || "Next.js"}</h2>
-                                </div>
-                                <div style={{ width: "1px", height: "40px", background: C.whiteGhost }} />
-                                <div style={{ flex: 1 }}>
-                                    <p style={{ fontSize: "9px", color: C.whiteLow, marginBottom: "4px" }}>BACKEND</p>
-                                    <h2 style={{ fontSize: "24px", color: C.white, margin: 0, letterSpacing: "0.05em" }}>{analysis.BACKEND || "Supabase"}</h2>
-                                </div>
-                            </div>
-                            <p style={{ fontSize: "14px", color: C.whiteMid, lineHeight: "1.6", borderTop: `1px solid ${C.whiteGhost}`, paddingTop: "15px", margin: 0 }}>
-                                <span style={{ color: C.accent }}>MOTIVE:</span> {analysis.MOTIVE}
-                            </p>
-                        </div>
-                        {/* Decorative background circle */}
-                        <div style={{
-                            position: "absolute", right: "-50px", top: "-50px", width: "200px", height: "200px",
-                            background: `radial-gradient(circle, ${C.ready}15 0%, transparent 70%)`,
-                            zIndex: 1
-                        }} />
-                    </div>
+                    {/* SUMMARY MOTIVE */}
+                    <p style={{ fontSize: "11px", color: C.accent, fontStyle: "italic", margin: "0 0 10px 0" }}>
+                        &gt; {analysis.summaryMotive}
+                    </p>
 
-                    {/* COMPARISON & TRADE-OFF */}
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px" }}>
-                        <div style={{ border: `1px solid ${C.cardBorder}`, background: C.cardBg, padding: "20px" }}>
-                            <p style={{ fontSize: "10px", color: C.accent, letterSpacing: "0.1em", marginBottom: "10px" }}>// ALTERNATIVE PATH</p>
-                            <p style={{ fontSize: "16px", color: C.whiteHi, margin: "0 0 10px 0" }}>{analysis.ALTERNATIVE}</p>
-                            <p style={{ fontSize: "11px", color: C.whiteLow, margin: 0 }}>Consider if you need full infrastructure control.</p>
-                        </div>
-                        <div style={{ border: `1px solid ${C.warn}`, background: "rgba(255,200,80,0.05)", padding: "20px" }}>
-                            <p style={{ fontSize: "10px", color: C.warn, letterSpacing: "0.1em", marginBottom: "10px" }}>// PRIMARY TRADE-OFF</p>
-                            <p style={{ fontSize: "12px", color: C.whiteHi, lineHeight: "1.5", margin: 0 }}>{analysis.TRADE_OFF}</p>
-                        </div>
+                    {/* STACK CARDS */}
+                    <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                        {analysis.recommendations?.map((rec, idx) => (
+                            <div key={idx} style={{
+                                background: rec.isPrimary ? "rgba(20,60,160,0.25)" : "rgba(255,255,255,0.03)",
+                                border: `1px solid ${rec.isPrimary ? C.ready : C.cardBorder}`,
+                                padding: "20px",
+                                position: "relative",
+                                overflow: "hidden",
+                                transition: "transform 0.2s ease"
+                            }}>
+                                <div style={{ position: "relative", zIndex: 2 }}>
+                                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "12px" }}>
+                                        <div>
+                                            <p style={{ fontSize: "9px", color: rec.isPrimary ? C.ready : C.whiteLow, letterSpacing: "0.15em", marginBottom: "4px" }}>
+                                                {rec.isPrimary ? "★ PREFERRED STACK" : "ALTERNATIVE OPTION"}
+                                            </p>
+                                            <h2 style={{ fontSize: "20px", color: C.white, margin: 0 }}>{rec.stackName}</h2>
+                                        </div>
+                                    </div>
+
+                                    <div style={{ display: "flex", gap: "20px", marginBottom: "16px", borderBottom: `1px solid ${C.whiteGhost}`, pb: "12px", paddingBottom: "12px" }}>
+                                        <div style={{ flex: 1 }}>
+                                            <p style={{ fontSize: "8px", color: C.whiteLow, marginBottom: "2px", letterSpacing: "0.05em" }}>FRONTEND</p>
+                                            <p style={{ fontSize: "12px", color: C.whiteHi, margin: 0, fontWeight: "500" }}>{rec.frontend}</p>
+                                        </div>
+                                        <div style={{ flex: 1 }}>
+                                            <p style={{ fontSize: "8px", color: C.whiteLow, marginBottom: "2px", letterSpacing: "0.05em" }}>BACKEND</p>
+                                            <p style={{ fontSize: "12px", color: C.whiteHi, margin: 0, fontWeight: "500" }}>{rec.backend}</p>
+                                        </div>
+                                        <div style={{ flex: 1 }}>
+                                            <p style={{ fontSize: "8px", color: C.whiteLow, marginBottom: "2px", letterSpacing: "0.05em" }}>DATABASE</p>
+                                            <p style={{ fontSize: "12px", color: C.whiteHi, margin: 0, fontWeight: "500" }}>{rec.database}</p>
+                                        </div>
+                                    </div>
+
+                                    <p style={{ fontSize: "12px", color: C.whiteMid, margin: 0 }}>
+                                        <span style={{ color: rec.isPrimary ? C.ready : C.accentLow }}>WHY:</span> {rec.whyPreferred}
+                                    </p>
+                                </div>
+                                {rec.isPrimary && (
+                                    <div style={{
+                                        position: "absolute", right: "-30px", top: "-30px", width: "120px", height: "120px",
+                                        background: `radial-gradient(circle, ${C.ready}10 0%, transparent 70%)`,
+                                        zIndex: 1
+                                    }} />
+                                )}
+                            </div>
+                        ))}
                     </div>
 
                     {/* FEEDBACK */}
-                    <div style={{ borderTop: `1px solid ${C.whiteGhost}`, paddingTop: "20px" }}>
+                    <div style={{ marginTop: "10px" }}>
                         <div style={{ display: "flex", gap: "10px" }}>
                             <input
                                 type="text"
