@@ -1,8 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { generateBuildRoadmap } from "@/lib/gemini"
-import { getCurrentContext, EVENTS } from "@/lib/context"
+import { getCurrentContext, EVENTS, KEYS } from "@/lib/context"
 
 // ─── COLORS (blueprint palette) ───────────────────────────────────────────────
 const C = {
@@ -68,54 +67,53 @@ export default function BuildRoadmap({ productDetails }) {
         setCurrentSpec(ctx.type === "refined" ? "REFINED" : "RAW")
 
         try {
-            const rawResponse = await generateBuildRoadmap(specToUse, "", bust)
+            const res = await fetch("/api/langchain/roadmap", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ productDetails: specToUse, feedback: "" }),
+            })
             
-            let jsonStr = rawResponse
+            if (!res.ok) throw new Error("Failed to fetch roadmap")
             
-            // Clean up Markdown code block wrappers if they exist
-            if (jsonStr.includes("```")) {
-                const parts = jsonStr.split("```")
-                // Find the first block that looks like a JSON array, or default to the second block
-                jsonStr = parts.find(p => p.trim().startsWith("[")) || parts[1]
-                
-                // If it starts with the language identifier (e.g., json), remove it
-                jsonStr = jsonStr.trim()
-                if (jsonStr.startsWith("json")) {
-                    jsonStr = jsonStr.substring(4).trim()
-                }
-            } else {
-                jsonStr = jsonStr.trim()
-            }
-            
-            const data = JSON.parse(jsonStr)
-            
+            const data = await res.json()
             setRoadmap(data)
+            localStorage.setItem(KEYS.CACHE_ROADMAP, JSON.stringify(data))
             setExpandedStage(0)
         } catch (err) {
-            console.error("Roadmap generation failed:", err)
-            const isQuota = err?.message?.includes("429") || err?.message?.includes("quota")
-            const isBusy = err?.message?.includes("503") || err?.message?.includes("demand")
-            
+            console.error("Roadmap error:", err)
             setRoadmap(MOCK_ROADMAP)
             setIsMock(true)
-            
-            if (isQuota || isBusy) {
-                if (isBusy) setError("Gemini is currently busy. Showing simulated roadmap.")
-            } else {
-                setError("Failed to generate roadmap. Gemini returned invalid JSON.")
-            }
+            setError("Failed to generate roadmap. Falling back to simulated data.")
         } finally {
             setIsLoading(false)
         }
     }
 
+    const checkCache = () => {
+        const cached = localStorage.getItem(KEYS.CACHE_ROADMAP)
+        if (cached) {
+            try {
+                const data = JSON.parse(cached)
+                setRoadmap(data)
+                return true
+            } catch (e) {
+                return false
+            }
+        }
+        return false
+    }
+
     useEffect(() => {
         if (!hasRun.current) {
             hasRun.current = true
-            handleGenerate()
+            const hasCache = checkCache()
+            if (!hasCache) handleGenerate()
         }
 
-        const onUpdate = () => handleGenerate(true)
+        const onUpdate = () => {
+            localStorage.removeItem(KEYS.CACHE_ROADMAP)
+            handleGenerate(true)
+        }
         window.addEventListener(EVENTS.UPDATED, onUpdate)
         return () => window.removeEventListener(EVENTS.UPDATED, onUpdate)
     }, [])

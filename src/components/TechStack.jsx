@@ -1,8 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { analyzeTechStack } from "@/lib/gemini"
-import { getCurrentContext } from "@/lib/context"
+import { getCurrentContext, EVENTS, KEYS } from "@/lib/context"
 
 // ─── COLORS (blueprint palette) ───────────────────────────────────────────────
 const C = {
@@ -58,12 +57,7 @@ export default function TechStack({ productDetails }) {
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState("")
     const [feedback, setFeedback] = useState("")
-    const [mounted, setMounted] = useState(false)
     const hasRun = useRef(false)
-
-    useEffect(() => {
-        setMounted(true)
-    }, [])
 
     const handleAnalyze = async (feedbackText = "", bust = false) => {
         setIsLoading(true)
@@ -83,6 +77,7 @@ export default function TechStack({ productDetails }) {
             
             const data = await res.json()
             setAnalysis(data)
+            localStorage.setItem(KEYS.CACHE_STACK, JSON.stringify(data))
         } catch (err) {
             console.error("TechStack error:", err)
             setAnalysis(MOCK_RESULT)
@@ -92,19 +87,40 @@ export default function TechStack({ productDetails }) {
         }
     }
 
+    const checkCache = () => {
+        const cached = localStorage.getItem(KEYS.CACHE_STACK)
+        if (cached) {
+            try {
+                const data = JSON.parse(cached)
+                setAnalysis(data)
+                return true
+            } catch (e) {
+                return false
+            }
+        }
+        return false
+    }
+
     useEffect(() => {
-        if (!mounted || hasRun.current) return
-        hasRun.current = true
-        handleAnalyze()
-    }, [mounted])
+        if (!hasRun.current) {
+            hasRun.current = true
+            const hasCache = checkCache()
+            if (!hasCache) handleAnalyze()
+        }
+
+        const onUpdate = () => {
+            localStorage.removeItem(KEYS.CACHE_STACK)
+            handleAnalyze(true)
+        }
+        window.addEventListener(EVENTS.UPDATED, onUpdate)
+        return () => window.removeEventListener(EVENTS.UPDATED, onUpdate)
+    }, [])
 
     const handleFeedbackSubmit = () => {
         if (!feedback.trim() || isLoading) return
         handleAnalyze(feedback, true)
         setFeedback("")
     }
-
-    if (!mounted) return null
 
     return (
         <section style={{ fontFamily: "monospace", color: C.whiteHi }}>

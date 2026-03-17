@@ -9,8 +9,7 @@ import ReactFlow, {
   addEdge 
 } from "reactflow"
 import "reactflow/dist/style.css"
-import { generateSystemArchitecture } from "@/lib/gemini"
-import { getCurrentContext, EVENTS } from "@/lib/context"
+import { getCurrentContext, EVENTS, KEYS } from "@/lib/context"
 
 // ─── COLORS (blueprint palette) ───────────────────────────────────────────────
 const C = {
@@ -76,29 +75,18 @@ export default function SystemArchitecture({ productDetails }) {
         setCurrentSpec(ctx.type === "refined" ? "REFINED" : "RAW")
 
         try {
-            const rawResponse = await generateSystemArchitecture(specToUse, "", bust)
+            const res = await fetch("/api/langchain/architecture", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ productDetails: specToUse }),
+            })
             
-            // Extract JSON from potential markdown/extra text
-            let jsonStr = rawResponse
+            if (!res.ok) throw new Error("Failed to fetch architecture")
             
-            // Clean up Markdown code block wrappers if they exist
-            if (jsonStr.includes("```")) {
-                const parts = jsonStr.split("```")
-                // Find the first block that looks like a JSON object, or default to the second block
-                jsonStr = parts.find(p => p.trim().startsWith("{")) || parts[1]
-                
-                // If it starts with the language identifier (e.g., json), remove it
-                jsonStr = jsonStr.trim()
-                if (jsonStr.startsWith("json")) {
-                    jsonStr = jsonStr.substring(4).trim()
-                }
-            } else {
-                jsonStr = jsonStr.trim()
-            }
-            
-            const data = JSON.parse(jsonStr)
+            const data = await res.json()
             
             setPrd(data.prd)
+            localStorage.setItem(KEYS.CACHE_ARCH, JSON.stringify(data))
 
             // Clean up nodes for React Flow
             const cleanNodes = (data.architecture?.nodes || []).map(n => ({
@@ -120,32 +108,60 @@ export default function SystemArchitecture({ productDetails }) {
             setNodes(cleanNodes)
             setEdges((data.architecture?.edges || []).map(e => ({ ...e, animated: true, stroke: C.accentMid })))
         } catch (err) {
-            console.error("Architecture generation failed:", err)
-            const isQuota = err?.message?.includes("429") || err?.message?.includes("quota")
-            const isBusy = err?.message?.includes("503") || err?.message?.includes("demand")
-            
+            console.error("Architecture generator error:", err)
             setPrd(MOCK_DATA.prd)
             setNodes(MOCK_DATA.architecture.nodes.map(n => ({ ...n, style: { background: "rgba(8,25,90,0.85)", color: C.whiteHi, border: `1px solid ${C.cardBorder}`, fontFamily: "monospace", width: 150 } })))
             setEdges(MOCK_DATA.architecture.edges)
             setIsMock(true)
-            
-            if (isQuota || isBusy) {
-                if (isBusy) setError("Gemini is currently busy. Showing simulated architecture.")
-            } else {
-                setError("Failed to generate architecture. Gemini returned invalid JSON.")
-            }
+            setError("Failed to generate blueprint. Falling back to simulated architecture.")
         } finally {
             setIsLoading(false)
         }
     }
 
+    const checkCache = () => {
+        const cached = localStorage.getItem(KEYS.CACHE_ARCH)
+        if (cached) {
+            try {
+                const data = JSON.parse(cached)
+                setPrd(data.prd)
+                
+                const cleanNodes = (data.architecture?.nodes || []).map(n => ({
+                    ...n,
+                    style: {
+                        background: "rgba(8,25,90,0.85)",
+                        color: C.whiteHi,
+                        border: `1px solid ${C.cardBorder}`,
+                        fontFamily: "monospace",
+                        fontSize: "12px",
+                        width: 180,
+                        textAlign: "center",
+                        padding: "8px 12px",
+                        backdropFilter: "blur(6px)",
+                        borderRadius: "2px",
+                    },
+                }))
+                setNodes(cleanNodes)
+                setEdges((data.architecture?.edges || []).map(e => ({ ...e, animated: true, stroke: C.accentMid })))
+                return true
+            } catch (e) {
+                return false
+            }
+        }
+        return false
+    }
+
     useEffect(() => {
         if (!hasRun.current) {
             hasRun.current = true
-            handleGenerate()
+            const hasCache = checkCache()
+            if (!hasCache) handleGenerate()
         }
 
-        const onUpdate = () => handleGenerate(true)
+        const onUpdate = () => {
+            localStorage.removeItem(KEYS.CACHE_ARCH)
+            handleGenerate(true)
+        }
         window.addEventListener(EVENTS.UPDATED, onUpdate)
         return () => window.removeEventListener(EVENTS.UPDATED, onUpdate)
     }, [])

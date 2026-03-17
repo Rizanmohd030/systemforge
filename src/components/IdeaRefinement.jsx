@@ -21,19 +21,7 @@ const C = {
     cardBorder: "rgba(255,255,255,0.18)",
 }
 
-// ─── PARSER ───────────────────────────────────────────────────────────────────
-function parseRefinedIdea(text) {
-    const get = (key) => {
-        const match = text.match(new RegExp(`${key}:\\s*(.+)`))
-        return match ? match[1].trim() : ""
-    }
-    return {
-        productName: get("PRODUCT_NAME"),
-        description: get("DESCRIPTION"),
-        targetUsers: get("TARGET_USERS").split(",").map(s => s.trim()).filter(Boolean),
-        coreFeatures: get("CORE_FEATURES").split(",").map(s => s.trim()).filter(Boolean),
-    }
-}
+// No longer need manual regex parsing!
 
 // ─── MOCK ─────────────────────────────────────────────────────────────────────
 const MOCK_RESULT = (idea) => ({
@@ -41,6 +29,10 @@ const MOCK_RESULT = (idea) => ({
     description: `A platform that helps users with: ${idea}. Built for speed and simplicity.`,
     targetUsers: ["Developers", "Power Users", "Small Teams"],
     coreFeatures: ["User Auth", "Dashboard", "API Integration", "Analytics", "Export", "Notifications"],
+    architectAdvice: [
+        { path: "Speed to Market", impact: "Focues on pre-built templates and BaaS like Supabase.", branchType: "SPEED" },
+        { path: "High Scale", impact: "Requires custom microservices and horizontal scaling strategy.", branchType: "SCALE" }
+    ]
 })
 
 // ─── MODULE INFO ──────────────────────────────────────────────────────────────
@@ -64,6 +56,7 @@ export default function IdeaRefinement({ rawIdea }) {
     const [isMock, setIsMock] = useState(false)
     const [iteration, setIteration] = useState(0)
     const [isSaved, setIsSaved] = useState(false)
+    const [history, setHistory] = useState([]) // Conversation memory
     const hasRun = useRef(false)
 
     useEffect(() => {
@@ -78,26 +71,36 @@ export default function IdeaRefinement({ rawIdea }) {
         if (rawIdea) handleRefine()
     }, [])
 
-    const handleRefine = async (feedbackText = "", bust = false) => {
+    const handleRefine = async (feedbackText = "") => {
         setIsLoading(true)
         setError("")
         setIsMock(false)
+        
         try {
-            const rawResponse = await refineIdea(rawIdea, feedbackText, bust)
-            setRefined(parseRefinedIdea(rawResponse))
+            const input = feedbackText ? feedbackText : rawIdea
+            const res = await fetch("/api/langchain/refine", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ rawIdea: input, history }),
+            })
+            
+            if (!res.ok) throw new Error("Refinement failed")
+            
+            const data = await res.json()
+            setRefined(data)
+            
+            // Update history for memory
+            setHistory(prev => [
+                ...prev,
+                { role: "user", content: input },
+                { role: "assistant", content: JSON.stringify(data) }
+            ])
+            
             setIteration(prev => prev + 1)
         } catch (err) {
-            const isQuota = err?.message?.includes("429") || err?.message?.includes("quota")
-            const isBusy = err?.message?.includes("503") || err?.message?.includes("demand")
-            
-            if (isQuota || isBusy) {
-                setRefined(MOCK_RESULT(rawIdea))
-                setIsMock(true)
-                if (isBusy) setError("Gemini is currently busy. Showing simulated concept.")
-            } else {
-                setError("Failed to reach Gemini. Check your API key.")
-                console.error(err)
-            }
+            console.error("Refine error:", err)
+            setError("Communication failure with Architect Brain.")
+            setRefined(MOCK_RESULT(rawIdea))
         } finally {
             setIsLoading(false)
         }
@@ -214,6 +217,35 @@ export default function IdeaRefinement({ rawIdea }) {
                     <ResultCard label="DESCRIPTION" value={refined.description} />
                     <ResultCard label="TARGET USERS" value={refined.targetUsers} isList />
                     <ResultCard label="CORE FEATURES" value={refined.coreFeatures} isList />
+
+                    {/* ── ARCHITECT BRANCHES ───────────────────────────────────── */}
+                    {refined.architectAdvice && (
+                        <div style={{ marginTop: "10px" }}>
+                            <p style={{ fontSize: "10px", color: C.accent, letterSpacing: "0.15em", marginBottom: "12px" }}>
+                                // ARCHITECT'S ADVICE: CHOOSE YOUR PATH
+                            </p>
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+                                {refined.architectAdvice.map((advice, i) => (
+                                    <div 
+                                        key={i} 
+                                        onClick={() => setFeedback(`I choose the ${advice.path} direction. ${advice.impact}`)}
+                                        style={{
+                                            border: `1px solid ${C.accentLow}`,
+                                            background: "rgba(120,180,255,0.05)",
+                                            padding: "12px",
+                                            cursor: "pointer",
+                                            transition: "all 0.2s"
+                                        }}
+                                        onMouseEnter={e => e.currentTarget.style.background = "rgba(120,180,255,0.15)"}
+                                        onMouseLeave={e => e.currentTarget.style.background = "rgba(120,180,255,0.05)"}
+                                    >
+                                        <p style={{ fontSize: "11px", color: C.ready, marginBottom: "4px", fontWeight: "bold" }}>↳ {advice.path}</p>
+                                        <p style={{ fontSize: "10px", color: C.whiteMid, lineHeight: "1.4", margin: 0 }}>{advice.impact}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
 
                     {/* ── FEEDBACK + REGENERATE ─────────────────────────────────── */}
                     <div style={{

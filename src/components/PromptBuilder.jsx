@@ -1,8 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { generateMasterPrompt } from "@/lib/gemini"
-import { getCurrentContext, EVENTS } from "@/lib/context"
+import { getCurrentContext, EVENTS, KEYS } from "@/lib/context"
 
 // ─── COLORS (blueprint palette) ───────────────────────────────────────────────
 const C = {
@@ -65,57 +64,55 @@ export default function PromptBuilder({ productDetails }) {
         setCurrentSpec(ctx.type === "refined" ? "REFINED" : "RAW")
 
         try {
-            const rawResponse = await generateMasterPrompt(specToUse, "", "", bust)
+            const res = await fetch("/api/langchain/prompt", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ productDetails: specToUse }),
+            })
             
-            let jsonStr = rawResponse;
-            let data = null;
-
-            // Robust JSON extraction using regex for an array of objects
-            const arrayMatch = jsonStr.match(/\[\s*\{[\s\S]*\}\s*\]/);
-            if (arrayMatch) {
-                data = JSON.parse(arrayMatch[0]);
-            } else {
-                // If the LLM returned an object instead of an array, try grabbing the first array inside it
-                const objMatch = jsonStr.match(/\{[\s\S]*\}/);
-                if (objMatch) {
-                    const obj = JSON.parse(objMatch[0]);
-                    const arr = Object.values(obj).find(v => Array.isArray(v));
-                    if (arr) data = arr;
-                }
-            }
-
-            if (!data || !Array.isArray(data)) {
-                throw new Error("API did not return a valid JSON array");
-            }
+            if (!res.ok) throw new Error("Failed to fetch prompts")
+            
+            const data = await res.json()
             
             setPrompts(data)
+            localStorage.setItem(KEYS.CACHE_PROMPT, JSON.stringify(data))
             setExpandedPhase(0)
         } catch (err) {
             console.error("Prompt generation failed:", err)
-            const isQuota = err?.message?.includes("429") || err?.message?.includes("quota")
-            const isBusy = err?.message?.includes("503") || err?.message?.includes("demand")
-            
             setPrompts(MOCK_PROMPTS)
             setIsMock(true)
-            
-            if (isQuota || isBusy) {
-                if (isBusy) setError("Gemini is currently busy. Showing simulated prompt phases.")
-            } else {
-                setError("Failed to generate segregated prompts. Gemini returned invalid JSON.")
-            }
+            setError("Failed to generate master prompts. Falling back to simulated phases.")
         } finally {
             setIsLoading(false)
         }
+    }
+
+    const checkCache = () => {
+        const cached = localStorage.getItem(KEYS.CACHE_PROMPT)
+        if (cached) {
+            try {
+                const data = JSON.parse(cached)
+                setPrompts(data)
+                return true
+            } catch (e) {
+                return false
+            }
+        }
+        return false
     }
 
     // Run on initial load and when product spec changes via events
     useEffect(() => {
         if (!hasRun.current) {
             hasRun.current = true
-            handleGenerate()
+            const hasCache = checkCache()
+            if (!hasCache) handleGenerate()
         }
 
-        const onUpdate = () => handleGenerate(true)
+        const onUpdate = () => {
+            localStorage.removeItem(KEYS.CACHE_PROMPT)
+            handleGenerate(true)
+        }
         window.addEventListener(EVENTS.UPDATED, onUpdate)
         return () => window.removeEventListener(EVENTS.UPDATED, onUpdate)
     }, [])
@@ -181,7 +178,7 @@ export default function PromptBuilder({ productDetails }) {
                                 >
                                     <div>
                                         <p style={{ fontSize: "10px", color: isExpanded ? C.ready : C.whiteLow, margin: "0 0 4px 0", letterSpacing: "0.1em" }}>PHASE 0{index + 1}</p>
-                                        <h4 style={{ fontSize: "15px", color: C.white, margin: 0 }}>{phase.phaseName}</h4>
+                                        <h4 style={{ fontSize: "15px", color: C.white, margin: 0 }}>{phase.title}</h4>
                                     </div>
                                     <div style={{ color: C.whiteLow, transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s ease" }}>
                                         ▼
@@ -196,11 +193,11 @@ export default function PromptBuilder({ productDetails }) {
                                         <div style={{ display: "flex", gap: "16px", marginTop: "16px", marginBottom: "16px" }}>
                                             <div style={{ flex: 1, background: "rgba(0,0,0,0.4)", padding: "12px", border: `1px dotted ${C.whiteGhost}` }}>
                                                 <p style={{ fontSize: "9px", color: C.accentMid, margin: "0 0 4px 0", letterSpacing: "0.1em" }}>TARGET IDE / AI</p>
-                                                <p style={{ fontSize: "12px", color: C.whiteHi, margin: 0 }}>{phase.targetAi}</p>
+                                                <p style={{ fontSize: "12px", color: C.whiteHi, margin: 0 }}>{phase.aiTarget}</p>
                                             </div>
                                             <div style={{ flex: 2, background: "rgba(0,0,0,0.4)", padding: "12px", border: `1px dotted ${C.whiteGhost}` }}>
                                                 <p style={{ fontSize: "9px", color: C.accentMid, margin: "0 0 4px 0", letterSpacing: "0.1em" }}>INSTRUCTIONS</p>
-                                                <p style={{ fontSize: "12px", color: C.whiteHi, margin: 0 }}>{phase.pasteInstructions}</p>
+                                                <p style={{ fontSize: "12px", color: C.whiteHi, margin: 0 }}>{phase.instructions}</p>
                                             </div>
                                         </div>
 
@@ -211,7 +208,7 @@ export default function PromptBuilder({ productDetails }) {
                                                     prompt_segment.md
                                                 </p>
                                                 <button
-                                                    onClick={(e) => { e.stopPropagation(); copyToClipboard(phase.promptText, `phase-${index}`); }}
+                                                    onClick={(e) => { e.stopPropagation(); copyToClipboard(phase.prompt, `phase-${index}`); }}
                                                     style={{
                                                         background: copiedContent === `phase-${index}` ? "rgba(100,220,255,0.15)" : "rgba(255,255,255,0.05)",
                                                         border: `1px solid ${copiedContent === `phase-${index}` ? C.ready : C.whiteLow}`,
@@ -224,7 +221,7 @@ export default function PromptBuilder({ productDetails }) {
                                                 </button>
                                             </div>
                                             <textarea
-                                                value={phase.promptText}
+                                                value={phase.prompt}
                                                 readOnly
                                                 style={{
                                                     width: "100%", height: "250px", resize: "vertical",

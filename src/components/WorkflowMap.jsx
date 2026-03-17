@@ -9,8 +9,7 @@ import ReactFlow, {
   addEdge 
 } from "reactflow"
 import "reactflow/dist/style.css"
-import { generateWorkflow } from "@/lib/gemini"
-import { getCurrentContext, EVENTS } from "@/lib/context"
+import { getCurrentContext, EVENTS, KEYS } from "@/lib/context"
 
 // ─── COLORS (blueprint palette) ───────────────────────────────────────────────
 const C = {
@@ -68,14 +67,16 @@ export default function WorkflowMap({ productDetails }) {
         setCurrentSpec(ctx.type === "refined" ? "REFINED" : "RAW")
 
         try {
-            const rawResponse = await generateWorkflow(specToUse, bust)
-            // Extract JSON from potential markdown/extra text
-            let jsonStr = rawResponse
-            if (jsonStr.includes("```")) {
-                jsonStr = jsonStr.split("```")[1]
-                if (jsonStr.startsWith("json")) jsonStr = jsonStr.slice(4)
-            }
-            const data = JSON.parse(jsonStr)
+            const res = await fetch("/api/langchain/workflow", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ productDetails: specToUse }),
+            })
+            
+            if (!res.ok) throw new Error("Failed to fetch workflow")
+            
+            const data = await res.json()
+            localStorage.setItem(KEYS.CACHE_WORKFLOW, JSON.stringify(data))
             
             // Clean up nodes for React Flow
             const cleanNodes = (data.nodes || []).map(n => ({
@@ -98,31 +99,57 @@ export default function WorkflowMap({ productDetails }) {
             setEdges((data.edges || []).map(e => ({ ...e, animated: true, stroke: C.accentMid })))
         } catch (err) {
             console.error("Workflow layout failed:", err)
-            const isQuota = err?.message?.includes("429") || err?.message?.includes("quota")
-            const isBusy = err?.message?.includes("503") || err?.message?.includes("demand")
-            
-            if (isQuota || isBusy) {
-                setNodes(MOCK_FLOW.nodes.map(n => ({ ...n, style: { background: "rgba(8,25,90,0.85)", color: C.whiteHi, border: `1px solid ${C.cardBorder}`, fontFamily: "monospace", width: 150 } })))
-                setEdges(MOCK_FLOW.edges)
-                setIsMock(true)
-                if (isBusy) setError("Gemini is currently busy. Showing simulated flow.")
-            } else {
-                setError("Failed to generate workflow. Gemini returned invalid JSON.")
-            }
+            setNodes(MOCK_FLOW.nodes.map(n => ({ ...n, style: { background: "rgba(8,25,90,0.85)", color: C.whiteHi, border: `1px solid ${C.cardBorder}`, fontFamily: "monospace", width: 150 } })))
+            setEdges(MOCK_FLOW.edges)
+            setIsMock(true)
+            setError("Failed to generate workflow. Falling back to simulated journey.")
         } finally {
             setIsLoading(false)
         }
+    }
+
+    const checkCache = () => {
+        const cached = localStorage.getItem(KEYS.CACHE_WORKFLOW)
+        if (cached) {
+            try {
+                const data = JSON.parse(cached)
+                // Clean up nodes for React Flow
+                const cleanNodes = (data.nodes || []).map(n => ({
+                    ...n,
+                    style: {
+                        background: "rgba(8,25,90,0.85)",
+                        color: C.whiteHi,
+                        border: `1px solid ${C.cardBorder}`,
+                        fontFamily: "monospace",
+                        fontSize: "12px",
+                        width: 180,
+                        textAlign: "center",
+                        padding: "8px 12px",
+                        backdropFilter: "blur(6px)",
+                        borderRadius: "2px",
+                    },
+                }))
+                setNodes(cleanNodes)
+                setEdges((data.edges || []).map(e => ({ ...e, animated: true, stroke: C.accentMid })))
+                return true
+            } catch (e) {
+                return false
+            }
+        }
+        return false
     }
 
     useEffect(() => {
         // Initial run
         if (!hasRun.current) {
             hasRun.current = true
-            handleGenerate()
+            const hasCache = checkCache()
+            if (!hasCache) handleGenerate()
         }
 
         // Listen for context updates
         const onUpdate = () => {
+            localStorage.removeItem(KEYS.CACHE_WORKFLOW)
             handleGenerate(true) // Force refresh when saved
         }
         window.addEventListener(EVENTS.UPDATED, onUpdate)

@@ -205,7 +205,7 @@ function HubDiagram({ modules, onSelect }) {
         {lines.map(({ id, x1, y1, x2, y2 }) => {
           const mod     = modules.find(m => m.id === id)
           const isHov   = hovered === id
-          const isReady = mod?.status === "READY"
+          const isReady = mod?.status === "READY" || mod?.status === "REFINED"
           return (
             <line
               key={id}
@@ -331,7 +331,7 @@ function Hub2D() {
 
 // ─── MODULE CARD ──────────────────────────────────────────────────────────────
 function ModuleCardHub({ mod, refCallback, isHovered, onHover, onClick }) {
-  const isReady = mod.status === "READY"
+  const isReady = mod.status === "READY" || mod.status === "REFINED"
   return (
     <div
       ref={refCallback}
