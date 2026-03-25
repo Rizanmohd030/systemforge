@@ -12,6 +12,8 @@
     "@google/generative-ai": "^0.24.1",
     "@langchain/core": "^1.1.32",
     "@langchain/google-genai": "^2.1.25",
+    "file-saver": "^2.0.5",
+    "jszip": "^3.10.1",
     "langchain": "^1.2.32",
     "mermaid": "^11.13.0",
     "next": "16.1.6",

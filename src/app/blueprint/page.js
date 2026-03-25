@@ -97,14 +97,14 @@ export default function BlueprintPage() {
 
       {/* TOP SCALE */}
       <div className="absolute top-6 left-0 right-0 text-[8px]"
-        style={{ display: "grid", gridTemplateColumns: "repeat(13, 80px)", justifyContent: "center", color: C.whiteLow, opacity: 0.5 }}>
-        {[0,10,20,30,40,50,60,70,80,90,100,110,120].map(n => <span key={n}>{n}</span>)}
+        style={{ display: "grid", gridTemplateColumns: "repeat(13, 80px)", justifyContent: "center", color: "rgba(255,255,255,0.22)", opacity: 1 }}>
+        {[0,10,20,30,40,50,60,70,80,90,100,110,120].map(n => <span key={n} style={{ fontFamily: "monospace", fontWeight: 500 }}>{n}</span>)}
       </div>
 
       {/* LEFT SCALE */}
       <div className="absolute left-6 top-0 bottom-0 text-[8px]"
-        style={{ display: "grid", gridTemplateRows: "repeat(13, 80px)", alignContent: "center", color: C.whiteLow, opacity: 0.5 }}>
-        {[0,10,20,30,40,50,60,70,80,90,100,110,120].map(n => <span key={n}>{n}</span>)}
+        style={{ display: "grid", gridTemplateRows: "repeat(13, 80px)", alignContent: "center", color: "rgba(255,255,255,0.22)", opacity: 1 }}>
+        {[0,10,20,30,40,50,60,70,80,90,100,110,120].map(n => <span key={n} style={{ fontFamily: "monospace", fontWeight: 500 }}>{n}</span>)}
       </div>
 
       {/* CORNER MARKERS */}
@@ -113,12 +113,47 @@ export default function BlueprintPage() {
       <div className="absolute bottom-4 left-4 w-12 h-12 border-b border-l opacity-20" style={{ borderColor: C.white }} />
       <div className="absolute bottom-4 right-4 w-12 h-12 border-b border-r opacity-20" style={{ borderColor: C.white }} />
 
-      {/* WORKSPACE SPECS OVERYLAY */}
-      <div className="absolute bottom-10 left-10 pointer-events-none opacity-30 text-[9px] flex flex-col gap-1 uppercase tracking-widest" style={{ color: C.whiteLow }}>
-        <span>Project_Ver: 0.9.4.SF</span>
-        <span>Resolution: 4K_Vector</span>
-        <span>Anchor_Set: Dynamic_Hub</span>
-        <span>Context_Sync: Active</span>
+      {/* L-SHAPED WORKSPACE INDICATOR (bottom-left) */}
+      <div className="absolute pointer-events-none" style={{
+        bottom: "24px", left: "24px", zIndex: 5,
+      }}>
+        {/* L-shape bracket */}
+        <div style={{
+          width: "140px", height: "120px", position: "relative",
+          borderLeft: "1.5px solid rgba(255,255,255,0.15)",
+          borderBottom: "1.5px solid rgba(255,255,255,0.15)",
+        }}>
+          {/* Corner dot */}
+          <div style={{
+            position: "absolute", bottom: "-3px", left: "-3px",
+            width: "5px", height: "5px", borderRadius: "50%",
+            background: "rgba(120,180,255,0.6)",
+            boxShadow: "0 0 8px rgba(120,180,255,0.4)",
+          }} />
+          {/* Top tick */}
+          <div style={{
+            position: "absolute", top: "0", left: "-6px",
+            width: "11px", height: "1px", background: "rgba(255,255,255,0.2)",
+          }} />
+          {/* Right tick */}
+          <div style={{
+            position: "absolute", bottom: "-5px", right: "0",
+            width: "1px", height: "11px", background: "rgba(255,255,255,0.2)",
+          }} />
+
+          {/* Spec text inside the L */}
+          <div style={{
+            position: "absolute", bottom: "10px", left: "12px",
+            fontSize: "8px", color: "rgba(255,255,255,0.25)",
+            letterSpacing: "0.12em", lineHeight: "1.8",
+            textTransform: "uppercase", fontFamily: "monospace",
+          }}>
+            <div>Project_Ver: 0.9.4.SF</div>
+            <div>Resolution: 4K_Vector</div>
+            <div>Anchor_Set: Dynamic_Hub</div>
+            <div style={{ color: "rgba(100,220,255,0.35)" }}>Context_Sync: Active</div>
+          </div>
+        </div>
       </div>
 
       {/* FIXED SIGNATURE (Centered at bottom) */}
@@ -289,77 +324,190 @@ function HubDiagram({ modules, onSelect }) {
   )
 }
 
-// ─── 2D ANIMATED HUB ──────────────────────────────────────────────────────────
+// ─── ARC REACTOR HUB (Iron Man Style) ─────────────────────────────────────────
 function Hub2D() {
+  const size = 200;
+  const cx = size / 2, cy = size / 2;
+  const NUM_COILS = 10;
+  const coilAngle = 360 / NUM_COILS;
+
+  // Generate trapezoidal coil segment paths
+  const coils = Array.from({ length: NUM_COILS }, (_, i) => {
+    const startDeg = i * coilAngle + 3;
+    const endDeg = (i + 1) * coilAngle - 3;
+    const rOuter = 94;
+    const rInner = 68;
+
+    const toRad = d => (d - 90) * Math.PI / 180;
+
+    const ox1 = cx + rOuter * Math.cos(toRad(startDeg));
+    const oy1 = cy + rOuter * Math.sin(toRad(startDeg));
+    const ox2 = cx + rOuter * Math.cos(toRad(endDeg));
+    const oy2 = cy + rOuter * Math.sin(toRad(endDeg));
+    const ix1 = cx + rInner * Math.cos(toRad(startDeg + 4));
+    const iy1 = cy + rInner * Math.sin(toRad(startDeg + 4));
+    const ix2 = cx + rInner * Math.cos(toRad(endDeg - 4));
+    const iy2 = cy + rInner * Math.sin(toRad(endDeg - 4));
+
+    return `M ${ox1} ${oy1} A ${rOuter} ${rOuter} 0 0 1 ${ox2} ${oy2} L ${ix2} ${iy2} A ${rInner} ${rInner} 0 0 0 ${ix1} ${iy1} Z`;
+  });
+
   return (
     <>
       <style>{`
-        .hub2d { width:160px; height:160px; position:relative; display:flex; align-items:center; justify-content:center; }
-
-        /* outer rotating dashed ring */
-        .hub-ring-outer {
-          position:absolute; inset:0;
-          border-radius:50%;
-          border: 1.5px dashed rgba(120,180,255,0.35);
-          animation: hub-spin 12s linear infinite;
-        }
-        /* dot nodes on the outer ring */
-        .hub-ring-outer::before, .hub-ring-outer::after {
-          content:""; position:absolute;
-          width:7px; height:7px; border-radius:50%;
-          background:rgba(120,180,255,0.85);
-          box-shadow:0 0 8px rgba(120,180,255,0.85);
-          top:50%; left:-3.5px; transform:translateY(-50%);
-        }
-        .hub-ring-outer::after { left:auto; right:-3.5px; }
-
-        /* middle solid ring — pulse */
-        .hub-ring-mid {
-          position:absolute; inset:26px;
-          border-radius:50%;
-          border: 1px solid rgba(255,255,255,0.25);
-          animation: hub-pulse 3s ease-in-out infinite;
+        .arc-reactor {
+          width: ${size}px; height: ${size}px;
+          position: relative;
+          display: flex; align-items: center; justify-content: center;
         }
 
-        /* inner solid ring — counter spin */
-        .hub-ring-inner {
-          position:absolute; inset:50px;
-          border-radius:50%;
-          border: 1.5px solid rgba(120,180,255,0.55);
-          animation: hub-spin-rev 8s linear infinite;
-        }
-        /* tick marks on inner ring */
-        .hub-ring-inner::before, .hub-ring-inner::after {
-          content:""; position:absolute;
-          width:6px; height:6px; border-radius:50%;
-          background:rgba(100,220,255,0.9);
-          box-shadow:0 0 7px rgba(100,220,255,0.9);
-          top:-3px; left:50%; transform:translateX(-50%);
-        }
-        .hub-ring-inner::after { top:auto; bottom:-3px; }
-
-        /* center glow */
-        .hub-center {
-          width:28px; height:28px;
-          border-radius:50%;
-          background: radial-gradient(circle at 35% 35%, #fff, rgba(80,160,255,0.9));
-          box-shadow: 0 0 12px rgba(120,180,255,1), 0 0 28px rgba(120,180,255,0.4);
-          animation: hub-center-pulse 2s ease-in-out infinite;
-          position:absolute;
-          z-index:2;
+        /* Ambient aura glow */
+        .arc-aura {
+          position: absolute; inset: -30px;
+          border-radius: 50%;
+          background: radial-gradient(circle, rgba(80,180,255,0.12) 0%, rgba(60,140,255,0.05) 40%, transparent 70%);
+          animation: arc-aura-pulse 3s ease-in-out infinite;
         }
 
-        @keyframes hub-spin      { from{transform:rotate(0deg)}   to{transform:rotate(360deg)} }
-        @keyframes hub-spin-rev  { from{transform:rotate(0deg)}   to{transform:rotate(-360deg)} }
-        @keyframes hub-pulse     { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(1.06)} }
-        @keyframes hub-center-pulse { 0%,100%{box-shadow:0 0 12px rgba(120,180,255,1),0 0 28px rgba(120,180,255,0.4)} 50%{box-shadow:0 0 20px rgba(120,180,255,1),0 0 50px rgba(120,180,255,0.3)} }
+        /* Outer coil ring — slow spin */
+        .arc-coils {
+          position: absolute; inset: 0;
+          animation: arc-spin 20s linear infinite;
+        }
+        .arc-coils svg { width: 100%; height: 100%; }
+
+        /* Ring between coils and inner section (glowing channel) */
+        .arc-channel {
+          position: absolute; inset: 32px;
+          border-radius: 50%;
+          border: 2px solid rgba(80,180,255,0.4);
+          box-shadow: 0 0 12px rgba(80,180,255,0.3), inset 0 0 12px rgba(80,180,255,0.15);
+          animation: arc-spin-rev 15s linear infinite;
+        }
+        .arc-channel::before, .arc-channel::after {
+          content: ""; position: absolute;
+          width: 7px; height: 7px; border-radius: 50%;
+          background: rgba(100,220,255,0.95);
+          box-shadow: 0 0 10px rgba(100,220,255,0.9);
+        }
+        .arc-channel::before { top: -3.5px; left: 50%; transform: translateX(-50%); }
+        .arc-channel::after  { bottom: -3.5px; left: 50%; transform: translateX(-50%); }
+
+        /* Middle ring — segmented dashes */
+        .arc-mid-ring {
+          position: absolute; inset: 46px;
+          border-radius: 50%;
+          border: 1.5px dashed rgba(100,200,255,0.25);
+          animation: arc-spin 8s linear infinite;
+        }
+
+        /* Inner ring — solid, counter-spin */
+        .arc-inner-ring {
+          position: absolute; inset: 56px;
+          border-radius: 50%;
+          border: 1.5px solid rgba(80,180,255,0.35);
+          animation: arc-spin-rev 10s linear infinite;
+        }
+        .arc-inner-ring::before, .arc-inner-ring::after {
+          content: ""; position: absolute;
+          width: 5px; height: 5px; border-radius: 50%;
+          background: rgba(100,220,255,0.8);
+          box-shadow: 0 0 6px rgba(100,220,255,0.7);
+        }
+        .arc-inner-ring::before { top: 50%; left: -2.5px; transform: translateY(-50%); }
+        .arc-inner-ring::after  { top: 50%; right: -2.5px; transform: translateY(-50%); }
+
+        /* Innermost ring */
+        .arc-inner-ring-2 {
+          position: absolute; inset: 66px;
+          border-radius: 50%;
+          border: 1px solid rgba(100,200,255,0.2);
+          animation: arc-spin 6s linear infinite;
+        }
+
+        /* Central core — bright glowing heart */
+        .arc-core {
+          width: 40px; height: 40px;
+          border-radius: 50%;
+          background: radial-gradient(circle at 45% 45%, #ffffff 0%, rgba(120,210,255,1) 35%, rgba(60,160,240,0.9) 60%, rgba(40,100,200,0.3) 100%);
+          box-shadow:
+            0 0 20px rgba(100,200,255,1),
+            0 0 45px rgba(80,180,255,0.6),
+            0 0 80px rgba(60,150,255,0.25),
+            inset 0 0 12px rgba(255,255,255,0.4);
+          animation: arc-core-pulse 2.5s ease-in-out infinite;
+          position: absolute;
+          z-index: 3;
+        }
+        .arc-core::before {
+          content: "";
+          position: absolute; inset: -10px;
+          border-radius: 50%;
+          border: 1px solid rgba(100,220,255,0.25);
+        }
+
+        @keyframes arc-spin       { from { transform: rotate(0deg) }   to { transform: rotate(360deg) } }
+        @keyframes arc-spin-rev   { from { transform: rotate(0deg) }   to { transform: rotate(-360deg) } }
+        @keyframes arc-core-pulse {
+          0%, 100% {
+            box-shadow: 0 0 20px rgba(100,200,255,1), 0 0 45px rgba(80,180,255,0.6), 0 0 80px rgba(60,150,255,0.25), inset 0 0 12px rgba(255,255,255,0.4);
+          }
+          50% {
+            box-shadow: 0 0 30px rgba(100,200,255,1), 0 0 65px rgba(80,180,255,0.5), 0 0 110px rgba(60,150,255,0.2), inset 0 0 18px rgba(255,255,255,0.6);
+          }
+        }
+        @keyframes arc-aura-pulse {
+          0%, 100% { opacity: 1; transform: scale(1); }
+          50% { opacity: 0.6; transform: scale(1.06); }
+        }
       `}</style>
 
-      <div className="hub2d">
-        <div className="hub-ring-outer" />
-        <div className="hub-ring-mid" />
-        <div className="hub-ring-inner" />
-        <div className="hub-center" />
+      <div className="arc-reactor">
+        <div className="arc-aura" />
+
+        {/* Outer coil segments (the trapezoidal "petals") */}
+        <div className="arc-coils">
+          <svg viewBox={`0 0 ${size} ${size}`}>
+            <defs>
+              <linearGradient id="coilGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="rgba(40,80,140,0.9)" />
+                <stop offset="50%" stopColor="rgba(30,60,120,0.7)" />
+                <stop offset="100%" stopColor="rgba(20,45,100,0.5)" />
+              </linearGradient>
+              <filter id="coilGlow">
+                <feGaussianBlur stdDeviation="1.5" result="blur" />
+                <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+              </filter>
+            </defs>
+            {coils.map((d, i) => (
+              <g key={i}>
+                <path
+                  d={d}
+                  fill="url(#coilGrad)"
+                  stroke="rgba(80,180,255,0.5)"
+                  strokeWidth="1"
+                  filter="url(#coilGlow)"
+                />
+                {/* Inner glow line on each coil */}
+                <path
+                  d={d}
+                  fill="none"
+                  stroke="rgba(100,200,255,0.15)"
+                  strokeWidth="0.5"
+                />
+              </g>
+            ))}
+            {/* Outer structural ring */}
+            <circle cx={cx} cy={cy} r="95" fill="none" stroke="rgba(80,180,255,0.2)" strokeWidth="1.5" />
+            <circle cx={cx} cy={cy} r="67" fill="none" stroke="rgba(80,180,255,0.25)" strokeWidth="1" />
+          </svg>
+        </div>
+
+        <div className="arc-channel" />
+        <div className="arc-mid-ring" />
+        <div className="arc-inner-ring" />
+        <div className="arc-inner-ring-2" />
+        <div className="arc-core" />
       </div>
     </>
   )
