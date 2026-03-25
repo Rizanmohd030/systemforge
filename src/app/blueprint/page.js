@@ -96,15 +96,51 @@ export default function BlueprintPage() {
     <main className="blueprint-bg min-h-screen relative font-mono overflow-hidden" style={{ color: C.whiteHi }}>
 
       {/* TOP SCALE */}
-      <div className="absolute top-6 left-0 right-0 text-xs"
-        style={{ display: "grid", gridTemplateColumns: "repeat(13, 80px)", justifyContent: "center", color: C.whiteLow }}>
+      <div className="absolute top-6 left-0 right-0 text-[8px]"
+        style={{ display: "grid", gridTemplateColumns: "repeat(13, 80px)", justifyContent: "center", color: C.whiteLow, opacity: 0.5 }}>
         {[0,10,20,30,40,50,60,70,80,90,100,110,120].map(n => <span key={n}>{n}</span>)}
       </div>
 
       {/* LEFT SCALE */}
-      <div className="absolute left-6 top-0 bottom-0 text-xs"
-        style={{ display: "grid", gridTemplateRows: "repeat(13, 80px)", alignContent: "center", color: C.whiteLow }}>
+      <div className="absolute left-6 top-0 bottom-0 text-[8px]"
+        style={{ display: "grid", gridTemplateRows: "repeat(13, 80px)", alignContent: "center", color: C.whiteLow, opacity: 0.5 }}>
         {[0,10,20,30,40,50,60,70,80,90,100,110,120].map(n => <span key={n}>{n}</span>)}
+      </div>
+
+      {/* CORNER MARKERS */}
+      <div className="absolute top-4 left-4 w-12 h-12 border-t border-l opacity-20" style={{ borderColor: C.white }} />
+      <div className="absolute top-4 right-4 w-12 h-12 border-t border-r opacity-20" style={{ borderColor: C.white }} />
+      <div className="absolute bottom-4 left-4 w-12 h-12 border-b border-l opacity-20" style={{ borderColor: C.white }} />
+      <div className="absolute bottom-4 right-4 w-12 h-12 border-b border-r opacity-20" style={{ borderColor: C.white }} />
+
+      {/* WORKSPACE SPECS OVERYLAY */}
+      <div className="absolute bottom-10 left-10 pointer-events-none opacity-30 text-[9px] flex flex-col gap-1 uppercase tracking-widest" style={{ color: C.whiteLow }}>
+        <span>Project_Ver: 0.9.4.SF</span>
+        <span>Resolution: 4K_Vector</span>
+        <span>Anchor_Set: Dynamic_Hub</span>
+        <span>Context_Sync: Active</span>
+      </div>
+
+      {/* FIXED SIGNATURE (Centered at bottom) */}
+      <div style={{
+        position: "absolute", bottom: "30px", left: "50%", transform: "translateX(-50%)",
+        textAlign: "center", zIndex: 10
+      }}>
+        <a 
+          href="https://rizanmi.vercel.app/" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          style={{
+            fontSize: "14px", color: C.accentMid, letterSpacing: "0.2em", textDecoration: "none",
+            borderBottom: "1px solid transparent", transition: "all 0.3s ease", fontWeight: "bold",
+            display: "inline-block", padding: "4px 10px", background: "rgba(8,25,90,0.6)",
+            backdropFilter: "blur(4px)", border: "1px solid rgba(255,255,255,0.05)"
+          }}
+          onMouseEnter={e => { e.currentTarget.style.color = C.white; e.currentTarget.style.borderBottomColor = C.ready }}
+          onMouseLeave={e => { e.currentTarget.style.color = C.accentMid; e.currentTarget.style.borderBottomColor = "transparent" }}
+        >
+          // FORGED BY RIZAN
+        </a>
       </div>
 
       {/* HEADER */}
@@ -242,12 +278,12 @@ function HubDiagram({ modules, onSelect }) {
         />
       ))}
 
-      {/* Hint */}
       <p style={{
-        position: "absolute", bottom: "18px", left: "50%", transform: "translateX(-50%)",
-        fontSize: "9px", color: C.whiteLow, letterSpacing: "0.08em", whiteSpace: "nowrap", zIndex: 3,
+        position: "absolute", bottom: "18px", left: "30px",
+        fontSize: "8px", color: C.whiteLow, letterSpacing: "0.15em", whiteSpace: "nowrap", zIndex: 3,
+        opacity: 0.3
       }}>
-        // SELECT A MODULE — DASHED = COMING SOON
+        SYSTEMFORGE_WORKSPACE_v1.4 // VECTOR_CORE_ACTIVE
       </p>
     </div>
   )
