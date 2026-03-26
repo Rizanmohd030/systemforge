@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState, useRef } from "react"
+import { Space_Grotesk } from "next/font/google"
 import IdeaRefinement from "@/components/IdeaRefinement"
 import WorkflowMap from "@/components/WorkflowMap"
 import TechStack from "@/components/TechStack"
@@ -8,6 +9,11 @@ import SystemArchitecture from "@/components/SystemArchitecture"
 import BuildRoadmap from "@/components/BuildRoadmap"
 import PromptBuilder from "@/components/PromptBuilder"
 import { getIdea, getRefinement, PROJECT_EVENT } from "@/lib/project"
+
+const nothingFont = Space_Grotesk({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+})
 
 // ─── COLORS ───────────────────────────────────────────────────────────────────
 const C = {
@@ -94,7 +100,7 @@ export default function BlueprintPage() {
   }, [])
 
   return (
-    <main className="blueprint-bg min-h-screen relative font-mono overflow-hidden" style={{ color: C.whiteHi }}>
+    <main className={`blueprint-bg min-h-screen relative overflow-hidden ${nothingFont.className}`} style={{ color: C.whiteHi }}>
 
       {/* TOP SCALE */}
       <div className="absolute top-6 left-0 right-0 text-[8px]"
@@ -168,7 +174,7 @@ export default function BlueprintPage() {
           rel="noopener noreferrer"
           style={{
             fontSize: "14px", color: C.accentMid, letterSpacing: "0.2em", textDecoration: "none",
-            borderBottom: "1px solid transparent", transition: "all 0.3s ease", fontWeight: "bold",
+            borderBottom: "1px solid transparent", transition: "all 0.3s ease", fontWeight: "600",
             display: "inline-block", padding: "4px 10px", background: "rgba(8,25,90,0.6)",
             backdropFilter: "blur(4px)", border: "1px solid rgba(255,255,255,0.05)"
           }}
@@ -186,7 +192,7 @@ export default function BlueprintPage() {
         background: "rgba(8,25,90,0.6)", backdropFilter: "blur(4px)",
         padding: "6px 20px", border: "1px solid rgba(255,255,255,0.1)", whiteSpace: "nowrap",
       }}>
-        <h1 style={{ fontSize: "12px", letterSpacing: "0.14em", color: C.white, margin: 0 }}>
+        <h1 style={{ fontSize: "13px", letterSpacing: "0.14em", color: C.white, margin: 0, fontWeight: 600 }}>
           &gt; SYSTEMFORGE BLUEPRINT
         </h1>
         <p style={{ fontSize: "9px", color: C.whiteLow, marginTop: "3px", letterSpacing: "0.06em" }}>
