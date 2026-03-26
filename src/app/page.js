@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
+import { saveIdea } from "@/lib/project"
 
 // ─── CONSTANTS ────────────────────────────────────────────────────────────────
 
@@ -89,7 +90,7 @@ export default function Home() {
       e.preventDefault()
       const value = inputRef.current?.value?.trim()
       if (!value || isSubmitting) return
-      localStorage.setItem("systemforge_idea", value)
+      saveIdea(value)
       setIsSubmitting(true)
       setTimeout(() => router.push("/blueprint"), 1200)
       return

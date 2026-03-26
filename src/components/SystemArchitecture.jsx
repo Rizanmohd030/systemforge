@@ -9,7 +9,7 @@ import ReactFlow, {
   addEdge 
 } from "reactflow"
 import "reactflow/dist/style.css"
-import { getCurrentContext, EVENTS, KEYS } from "@/lib/context"
+import { getCurrentContext, PROJECT_EVENT, generateHash, shouldFetch, getModule, updateModule } from "@/lib/project"
 
 // ─── COLORS (blueprint palette) ───────────────────────────────────────────────
 const C = {
@@ -64,15 +64,46 @@ export default function SystemArchitecture({ productDetails }) {
 
     const onConnect = useCallback((params) => setEdges((eds) => addEdge(params, eds)), [setEdges])
 
+    const applyArchData = (data) => {
+        setPrd(data.prd)
+        const cleanNodes = (data.architecture?.nodes || []).map(n => ({
+            ...n,
+            style: {
+                background: "rgba(8,25,90,0.85)",
+                color: C.whiteHi,
+                border: `1px solid ${C.cardBorder}`,
+                fontFamily: "monospace",
+                fontSize: "12px",
+                width: 180,
+                textAlign: "center",
+                padding: "8px 12px",
+                backdropFilter: "blur(6px)",
+                borderRadius: "2px",
+            },
+        }))
+        setNodes(cleanNodes)
+        setEdges((data.architecture?.edges || []).map(e => ({ ...e, animated: true, stroke: C.accentMid })))
+    }
+
     const handleGenerate = async (bust = false) => {
         setIsLoading(true)
         setError("")
         setIsMock(false)
 
-        // Resolve context
         const ctx = getCurrentContext()
         const specToUse = ctx.type === "refined" ? ctx.data : productDetails
         setCurrentSpec(ctx.type === "refined" ? "REFINED" : "RAW")
+        const inputHash = generateHash(specToUse)
+
+        // Check hash-based cache
+        if (!bust && !shouldFetch("architecture", inputHash)) {
+            const cached = getModule("architecture")
+            if (cached?.data) {
+                applyArchData(cached.data)
+                setIsLoading(false)
+                return
+            }
+        }
 
         try {
             const res = await fetch("/api/langchain/architecture", {
@@ -84,29 +115,8 @@ export default function SystemArchitecture({ productDetails }) {
             if (!res.ok) throw new Error("Failed to fetch architecture")
             
             const data = await res.json()
-            
-            setPrd(data.prd)
-            localStorage.setItem(KEYS.CACHE_ARCH, JSON.stringify(data))
-
-            // Clean up nodes for React Flow
-            const cleanNodes = (data.architecture?.nodes || []).map(n => ({
-                ...n,
-                style: {
-                    background: "rgba(8,25,90,0.85)",
-                    color: C.whiteHi,
-                    border: `1px solid ${C.cardBorder}`,
-                    fontFamily: "monospace",
-                    fontSize: "12px",
-                    width: 180,
-                    textAlign: "center",
-                    padding: "8px 12px",
-                    backdropFilter: "blur(6px)",
-                    borderRadius: "2px",
-                },
-            }))
-
-            setNodes(cleanNodes)
-            setEdges((data.architecture?.edges || []).map(e => ({ ...e, animated: true, stroke: C.accentMid })))
+            updateModule("architecture", data, inputHash)
+            applyArchData(data)
         } catch (err) {
             console.error("Architecture generator error:", err)
             setPrd(MOCK_DATA.prd)
@@ -119,51 +129,15 @@ export default function SystemArchitecture({ productDetails }) {
         }
     }
 
-    const checkCache = () => {
-        const cached = localStorage.getItem(KEYS.CACHE_ARCH)
-        if (cached) {
-            try {
-                const data = JSON.parse(cached)
-                setPrd(data.prd)
-                
-                const cleanNodes = (data.architecture?.nodes || []).map(n => ({
-                    ...n,
-                    style: {
-                        background: "rgba(8,25,90,0.85)",
-                        color: C.whiteHi,
-                        border: `1px solid ${C.cardBorder}`,
-                        fontFamily: "monospace",
-                        fontSize: "12px",
-                        width: 180,
-                        textAlign: "center",
-                        padding: "8px 12px",
-                        backdropFilter: "blur(6px)",
-                        borderRadius: "2px",
-                    },
-                }))
-                setNodes(cleanNodes)
-                setEdges((data.architecture?.edges || []).map(e => ({ ...e, animated: true, stroke: C.accentMid })))
-                return true
-            } catch (e) {
-                return false
-            }
-        }
-        return false
-    }
-
     useEffect(() => {
         if (!hasRun.current) {
             hasRun.current = true
-            const hasCache = checkCache()
-            if (!hasCache) handleGenerate()
+            handleGenerate()
         }
 
-        const onUpdate = () => {
-            localStorage.removeItem(KEYS.CACHE_ARCH)
-            handleGenerate(true)
-        }
-        window.addEventListener(EVENTS.UPDATED, onUpdate)
-        return () => window.removeEventListener(EVENTS.UPDATED, onUpdate)
+        const onUpdate = () => handleGenerate(true)
+        window.addEventListener(PROJECT_EVENT, onUpdate)
+        return () => window.removeEventListener(PROJECT_EVENT, onUpdate)
     }, [])
 
     return (

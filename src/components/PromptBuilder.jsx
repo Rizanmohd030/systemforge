@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { getCurrentContext, EVENTS, KEYS } from "@/lib/context"
+import { getCurrentContext, PROJECT_EVENT, generateHash, shouldFetch, getModule, updateModule } from "@/lib/project"
 
 // ─── COLORS (blueprint palette) ───────────────────────────────────────────────
 const C = {
@@ -62,6 +62,18 @@ export default function PromptBuilder({ productDetails }) {
         const ctx = getCurrentContext()
         const specToUse = ctx.type === "refined" ? ctx.data : productDetails
         setCurrentSpec(ctx.type === "refined" ? "REFINED" : "RAW")
+        const inputHash = generateHash(specToUse)
+
+        // Check hash-based cache
+        if (!bust && !shouldFetch("prompts", inputHash)) {
+            const cached = getModule("prompts")
+            if (cached?.data) {
+                setPrompts(cached.data)
+                setExpandedPhase(0)
+                setIsLoading(false)
+                return
+            }
+        }
 
         try {
             const res = await fetch("/api/langchain/prompt", {
@@ -73,9 +85,8 @@ export default function PromptBuilder({ productDetails }) {
             if (!res.ok) throw new Error("Failed to fetch prompts")
             
             const data = await res.json()
-            
             setPrompts(data)
-            localStorage.setItem(KEYS.CACHE_PROMPT, JSON.stringify(data))
+            updateModule("prompts", data, inputHash)
             setExpandedPhase(0)
         } catch (err) {
             console.error("Prompt generation failed:", err)
@@ -87,34 +98,15 @@ export default function PromptBuilder({ productDetails }) {
         }
     }
 
-    const checkCache = () => {
-        const cached = localStorage.getItem(KEYS.CACHE_PROMPT)
-        if (cached) {
-            try {
-                const data = JSON.parse(cached)
-                setPrompts(data)
-                return true
-            } catch (e) {
-                return false
-            }
-        }
-        return false
-    }
-
-    // Run on initial load and when product spec changes via events
     useEffect(() => {
         if (!hasRun.current) {
             hasRun.current = true
-            const hasCache = checkCache()
-            if (!hasCache) handleGenerate()
+            handleGenerate()
         }
 
-        const onUpdate = () => {
-            localStorage.removeItem(KEYS.CACHE_PROMPT)
-            handleGenerate(true)
-        }
-        window.addEventListener(EVENTS.UPDATED, onUpdate)
-        return () => window.removeEventListener(EVENTS.UPDATED, onUpdate)
+        const onUpdate = () => handleGenerate(true)
+        window.addEventListener(PROJECT_EVENT, onUpdate)
+        return () => window.removeEventListener(PROJECT_EVENT, onUpdate)
     }, [])
 
     const copyToClipboard = async (text, id) => {

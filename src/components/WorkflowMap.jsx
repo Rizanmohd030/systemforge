@@ -9,7 +9,7 @@ import ReactFlow, {
   addEdge 
 } from "reactflow"
 import "reactflow/dist/style.css"
-import { getCurrentContext, EVENTS, KEYS } from "@/lib/context"
+import { getCurrentContext, PROJECT_EVENT, generateHash, shouldFetch, getModule, updateModule } from "@/lib/project"
 
 // ─── COLORS (blueprint palette) ───────────────────────────────────────────────
 const C = {
@@ -56,15 +56,45 @@ export default function WorkflowMap({ productDetails }) {
 
     const onConnect = useCallback((params) => setEdges((eds) => addEdge(params, eds)), [setEdges])
 
+    const applyFlowData = (data) => {
+        const cleanNodes = (data.nodes || []).map(n => ({
+            ...n,
+            style: {
+                background: "rgba(8,25,90,0.85)",
+                color: C.whiteHi,
+                border: `1px solid ${C.cardBorder}`,
+                fontFamily: "monospace",
+                fontSize: "12px",
+                width: 180,
+                textAlign: "center",
+                padding: "8px 12px",
+                backdropFilter: "blur(6px)",
+                borderRadius: "2px",
+            },
+        }))
+        setNodes(cleanNodes)
+        setEdges((data.edges || []).map(e => ({ ...e, animated: true, stroke: C.accentMid })))
+    }
+
     const handleGenerate = async (bust = false) => {
         setIsLoading(true)
         setError("")
         setIsMock(false)
 
-        // Resolve context
         const ctx = getCurrentContext()
         const specToUse = ctx.type === "refined" ? ctx.data : productDetails
         setCurrentSpec(ctx.type === "refined" ? "REFINED" : "RAW")
+        const inputHash = generateHash(specToUse)
+
+        // Check hash-based cache
+        if (!bust && !shouldFetch("workflow", inputHash)) {
+            const cached = getModule("workflow")
+            if (cached?.data) {
+                applyFlowData(cached.data)
+                setIsLoading(false)
+                return
+            }
+        }
 
         try {
             const res = await fetch("/api/langchain/workflow", {
@@ -76,27 +106,8 @@ export default function WorkflowMap({ productDetails }) {
             if (!res.ok) throw new Error("Failed to fetch workflow")
             
             const data = await res.json()
-            localStorage.setItem(KEYS.CACHE_WORKFLOW, JSON.stringify(data))
-            
-            // Clean up nodes for React Flow
-            const cleanNodes = (data.nodes || []).map(n => ({
-                ...n,
-                style: {
-                    background: "rgba(8,25,90,0.85)",
-                    color: C.whiteHi,
-                    border: `1px solid ${C.cardBorder}`,
-                    fontFamily: "monospace",
-                    fontSize: "12px",
-                    width: 180,
-                    textAlign: "center",
-                    padding: "8px 12px",
-                    backdropFilter: "blur(6px)",
-                    borderRadius: "2px",
-                },
-            }))
-
-            setNodes(cleanNodes)
-            setEdges((data.edges || []).map(e => ({ ...e, animated: true, stroke: C.accentMid })))
+            updateModule("workflow", data, inputHash)
+            applyFlowData(data)
         } catch (err) {
             console.error("Workflow layout failed:", err)
             setNodes(MOCK_FLOW.nodes.map(n => ({ ...n, style: { background: "rgba(8,25,90,0.85)", color: C.whiteHi, border: `1px solid ${C.cardBorder}`, fontFamily: "monospace", width: 150 } })))
@@ -108,52 +119,15 @@ export default function WorkflowMap({ productDetails }) {
         }
     }
 
-    const checkCache = () => {
-        const cached = localStorage.getItem(KEYS.CACHE_WORKFLOW)
-        if (cached) {
-            try {
-                const data = JSON.parse(cached)
-                // Clean up nodes for React Flow
-                const cleanNodes = (data.nodes || []).map(n => ({
-                    ...n,
-                    style: {
-                        background: "rgba(8,25,90,0.85)",
-                        color: C.whiteHi,
-                        border: `1px solid ${C.cardBorder}`,
-                        fontFamily: "monospace",
-                        fontSize: "12px",
-                        width: 180,
-                        textAlign: "center",
-                        padding: "8px 12px",
-                        backdropFilter: "blur(6px)",
-                        borderRadius: "2px",
-                    },
-                }))
-                setNodes(cleanNodes)
-                setEdges((data.edges || []).map(e => ({ ...e, animated: true, stroke: C.accentMid })))
-                return true
-            } catch (e) {
-                return false
-            }
-        }
-        return false
-    }
-
     useEffect(() => {
-        // Initial run
         if (!hasRun.current) {
             hasRun.current = true
-            const hasCache = checkCache()
-            if (!hasCache) handleGenerate()
+            handleGenerate()
         }
 
-        // Listen for context updates
-        const onUpdate = () => {
-            localStorage.removeItem(KEYS.CACHE_WORKFLOW)
-            handleGenerate(true) // Force refresh when saved
-        }
-        window.addEventListener(EVENTS.UPDATED, onUpdate)
-        return () => window.removeEventListener(EVENTS.UPDATED, onUpdate)
+        const onUpdate = () => handleGenerate(true)
+        window.addEventListener(PROJECT_EVENT, onUpdate)
+        return () => window.removeEventListener(PROJECT_EVENT, onUpdate)
     }, [])
 
     return (

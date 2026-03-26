@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { getCurrentContext, EVENTS, KEYS } from "@/lib/context"
+import { getCurrentContext, PROJECT_EVENT, generateHash, shouldFetch, getModule, updateModule } from "@/lib/project"
 
 // ─── COLORS (blueprint palette) ───────────────────────────────────────────────
 const C = {
@@ -65,6 +65,17 @@ export default function TechStack({ productDetails }) {
         
         const ctx = getCurrentContext()
         const specToSearch = ctx.type === "refined" ? ctx.data : productDetails
+        const inputHash = generateHash(specToSearch)
+
+        // Check hash-based cache (skip if bust or feedback)
+        if (!bust && !feedbackText && !shouldFetch("stack", inputHash)) {
+            const cached = getModule("stack")
+            if (cached?.data) {
+                setAnalysis(cached.data)
+                setIsLoading(false)
+                return
+            }
+        }
 
         try {
             const res = await fetch("/api/langchain/stack", {
@@ -77,7 +88,7 @@ export default function TechStack({ productDetails }) {
             
             const data = await res.json()
             setAnalysis(data)
-            localStorage.setItem(KEYS.CACHE_STACK, JSON.stringify(data))
+            updateModule("stack", data, inputHash)
         } catch (err) {
             console.error("TechStack error:", err)
             setAnalysis(MOCK_RESULT)
@@ -87,33 +98,15 @@ export default function TechStack({ productDetails }) {
         }
     }
 
-    const checkCache = () => {
-        const cached = localStorage.getItem(KEYS.CACHE_STACK)
-        if (cached) {
-            try {
-                const data = JSON.parse(cached)
-                setAnalysis(data)
-                return true
-            } catch (e) {
-                return false
-            }
-        }
-        return false
-    }
-
     useEffect(() => {
         if (!hasRun.current) {
             hasRun.current = true
-            const hasCache = checkCache()
-            if (!hasCache) handleAnalyze()
+            handleAnalyze()
         }
 
-        const onUpdate = () => {
-            localStorage.removeItem(KEYS.CACHE_STACK)
-            handleAnalyze(true)
-        }
-        window.addEventListener(EVENTS.UPDATED, onUpdate)
-        return () => window.removeEventListener(EVENTS.UPDATED, onUpdate)
+        const onUpdate = () => handleAnalyze("", true)
+        window.addEventListener(PROJECT_EVENT, onUpdate)
+        return () => window.removeEventListener(PROJECT_EVENT, onUpdate)
     }, [])
 
     const handleFeedbackSubmit = () => {

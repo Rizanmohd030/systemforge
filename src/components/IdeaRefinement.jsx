@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import { refineIdea } from "@/lib/gemini"
-import { saveRefinedConcept, KEYS } from "@/lib/context"
+import { saveRefinement, getRefinement } from "@/lib/project"
 
 // ─── COLORS (blueprint palette) ───────────────────────────────────────────────
 const C = {
@@ -62,7 +62,7 @@ export default function IdeaRefinement({ rawIdea }) {
     useEffect(() => {
         // Check if already saved
         if (typeof window !== "undefined") {
-            const saved = localStorage.getItem(KEYS.REFINED)
+            const saved = getRefinement()
             if (saved) setIsSaved(true)
         }
 
@@ -108,7 +108,7 @@ export default function IdeaRefinement({ rawIdea }) {
 
     const handleSave = () => {
         if (!refined) return
-        saveRefinedConcept(refined)
+        saveRefinement(refined)
         setIsSaved(true)
     }
 

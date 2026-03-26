@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { getCurrentContext, EVENTS, KEYS } from "@/lib/context"
+import { getCurrentContext, PROJECT_EVENT, generateHash, shouldFetch, getModule, updateModule } from "@/lib/project"
 
 // ─── COLORS (blueprint palette) ───────────────────────────────────────────────
 const C = {
@@ -65,6 +65,18 @@ export default function BuildRoadmap({ productDetails }) {
         const ctx = getCurrentContext()
         const specToUse = ctx.type === "refined" ? ctx.data : productDetails
         setCurrentSpec(ctx.type === "refined" ? "REFINED" : "RAW")
+        const inputHash = generateHash(specToUse)
+
+        // Check hash-based cache
+        if (!bust && !shouldFetch("roadmap", inputHash)) {
+            const cached = getModule("roadmap")
+            if (cached?.data) {
+                setRoadmap(cached.data)
+                setExpandedStage(0)
+                setIsLoading(false)
+                return
+            }
+        }
 
         try {
             const res = await fetch("/api/langchain/roadmap", {
@@ -77,7 +89,7 @@ export default function BuildRoadmap({ productDetails }) {
             
             const data = await res.json()
             setRoadmap(data)
-            localStorage.setItem(KEYS.CACHE_ROADMAP, JSON.stringify(data))
+            updateModule("roadmap", data, inputHash)
             setExpandedStage(0)
         } catch (err) {
             console.error("Roadmap error:", err)
@@ -89,33 +101,15 @@ export default function BuildRoadmap({ productDetails }) {
         }
     }
 
-    const checkCache = () => {
-        const cached = localStorage.getItem(KEYS.CACHE_ROADMAP)
-        if (cached) {
-            try {
-                const data = JSON.parse(cached)
-                setRoadmap(data)
-                return true
-            } catch (e) {
-                return false
-            }
-        }
-        return false
-    }
-
     useEffect(() => {
         if (!hasRun.current) {
             hasRun.current = true
-            const hasCache = checkCache()
-            if (!hasCache) handleGenerate()
+            handleGenerate()
         }
 
-        const onUpdate = () => {
-            localStorage.removeItem(KEYS.CACHE_ROADMAP)
-            handleGenerate(true)
-        }
-        window.addEventListener(EVENTS.UPDATED, onUpdate)
-        return () => window.removeEventListener(EVENTS.UPDATED, onUpdate)
+        const onUpdate = () => handleGenerate(true)
+        window.addEventListener(PROJECT_EVENT, onUpdate)
+        return () => window.removeEventListener(PROJECT_EVENT, onUpdate)
     }, [])
 
     const copyToClipboard = async (text, id) => {
