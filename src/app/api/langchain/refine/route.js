@@ -5,6 +5,8 @@ import { HumanMessage, AIMessage } from "@langchain/core/messages"
 import { z } from "zod"
 import { NextResponse } from "next/server"
 
+import { getRefinementSystemPrompt } from "@/lib/prompts"
+
 // ─── SCHEMA ──────────────────────────────────────────────────
 // This schema includes "Architect Advice" - the branching logic.
 const refineSchema = z.object({
@@ -33,14 +35,7 @@ export async function POST(request) {
 
         // ─── CONVERSATIONAL PROMPT ───────────────────────────
         const prompt = ChatPromptTemplate.fromMessages([
-            ["system", `You are a Senior Product Architect at SystemForge. 
-Your goal is to refine raw ideas into professional product concepts.
-
-When users give feedback, update the concept accordingly. 
-Always provide "Architect Advice" - explain the trade-offs of their choices.
-Example: "If you prioritize [A], then [B] will happen visually."
-
-{format_instructions}`],
+            ["system", getRefinementSystemPrompt()],
             new MessagesPlaceholder("history"),
             ["human", "{input}"]
         ])

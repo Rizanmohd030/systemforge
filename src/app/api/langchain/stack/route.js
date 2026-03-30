@@ -4,6 +4,8 @@ import { StructuredOutputParser } from "@langchain/core/output_parsers"
 import { z } from "zod"
 import { NextResponse } from "next/server"
 
+import { buildTechStackPrompt } from "@/lib/prompts"
+
 // ─── STEP 1: Define the Schema (Zod) ─────────────────────────
 // This schema matches the requirements of the TechStack component.
 // By defining it here, we ensure the AI ALWAYS returns these keys.
@@ -23,7 +25,7 @@ const parser = StructuredOutputParser.fromZodSchema(techStackSchema)
 
 export async function POST(request) {
     try {
-        const { productDetails, feedback } = await request.json()
+        const { context, feedback } = await request.json()
 
         const model = new ChatGoogleGenerativeAI({
             model: "gemini-2.5-flash",
@@ -31,25 +33,16 @@ export async function POST(request) {
             temperature: 0, // 0 = Most reliable for structured data
         })
 
+        const templateStr = buildTechStackPrompt(context)
         const template = new PromptTemplate({
-            template: `You are a senior solution architect. Analyze and recommend a modern technology stack for this product concept.
-
-Product Details:
-{productDetails}
-
-{feedbackSection}
-
-{format_instructions}`,
-            inputVariables: ["productDetails", "feedbackSection"],
+            template: templateStr + (feedback ? `\nUser constraints/feedback: "${feedback}"` : ""),
+            inputVariables: [],
             partialVariables: { format_instructions: parser.getFormatInstructions() },
         })
 
         const chain = template.pipe(model).pipe(parser)
 
-        const result = await chain.invoke({
-            productDetails: JSON.stringify(productDetails),
-            feedbackSection: feedback ? `User constraints/feedback: "${feedback}"` : "",
-        })
+        const result = await chain.invoke({})
 
         return NextResponse.json(result)
     } catch (error) {

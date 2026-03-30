@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { getCurrentContext, PROJECT_EVENT, generateHash, shouldFetch, getModule, updateModule } from "@/lib/project"
+import { useProjectStore } from "@/store/projectStore"
 
 // ─── COLORS (blueprint palette) ───────────────────────────────────────────────
 const C = {
@@ -52,8 +52,8 @@ export default function BuildRoadmap({ productDetails }) {
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState("")
     const [isMock, setIsMock] = useState(false)
-    const [currentSpec, setCurrentSpec] = useState(null)
-    const [copiedContent, setCopiedContent] = useState(null)
+    const { getCurrentContext, setRoadmap: setGlobalRoadmap, roadmap: globalRoadmap } = useProjectStore()
+    const ctx = getCurrentContext()
     
     const hasRun = useRef(false)
 
@@ -62,34 +62,25 @@ export default function BuildRoadmap({ productDetails }) {
         setError("")
         setIsMock(false)
 
-        const ctx = getCurrentContext()
-        const specToUse = ctx.type === "refined" ? ctx.data : productDetails
-        setCurrentSpec(ctx.type === "refined" ? "REFINED" : "RAW")
-        const inputHash = generateHash(specToUse)
-
-        // Check hash-based cache
-        if (!bust && !shouldFetch("roadmap", inputHash)) {
-            const cached = getModule("roadmap")
-            if (cached?.data) {
-                setRoadmap(cached.data)
-                setExpandedStage(0)
-                setIsLoading(false)
-                return
-            }
+        if (!bust && globalRoadmap && globalRoadmap.length > 0) {
+            setRoadmap(globalRoadmap)
+            setExpandedStage(0)
+            setIsLoading(false)
+            return
         }
 
         try {
             const res = await fetch("/api/langchain/roadmap", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ productDetails: specToUse, feedback: "" }),
+                body: JSON.stringify({ context: ctx, feedback: "" }),
             })
             
             if (!res.ok) throw new Error("Failed to fetch roadmap")
             
             const data = await res.json()
             setRoadmap(data)
-            updateModule("roadmap", data, inputHash)
+            setGlobalRoadmap(data)
             setExpandedStage(0)
         } catch (err) {
             console.error("Roadmap error:", err)
@@ -106,11 +97,7 @@ export default function BuildRoadmap({ productDetails }) {
             hasRun.current = true
             handleGenerate()
         }
-
-        const onUpdate = () => handleGenerate(true)
-        window.addEventListener(PROJECT_EVENT, onUpdate)
-        return () => window.removeEventListener(PROJECT_EVENT, onUpdate)
-    }, [])
+    }, [ctx])
 
     const copyToClipboard = async (text, id) => {
         try {

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { getCurrentContext, PROJECT_EVENT, generateHash, shouldFetch, getModule, updateModule } from "@/lib/project"
+import { useProjectStore } from "@/store/projectStore"
 
 // ─── COLORS (blueprint palette) ───────────────────────────────────────────────
 const C = {
@@ -122,8 +122,9 @@ export default function WorkflowMap({ productDetails }) {
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState("")
     const [isMock, setIsMock] = useState(false)
-    const [currentSpec, setCurrentSpec] = useState(null)
     const [hovered, setHovered] = useState(null)
+    const { getCurrentContext, setWorkflow, workflow } = useProjectStore()
+    const ctx = getCurrentContext()
     const hasRun = useRef(false)
 
     // Convert API nodes format to flat steps list
@@ -142,32 +143,23 @@ export default function WorkflowMap({ productDetails }) {
         setError("")
         setIsMock(false)
 
-        const ctx = getCurrentContext()
-        const specToUse = ctx.type === "refined" ? ctx.data : productDetails
-        setCurrentSpec(ctx.type === "refined" ? "REFINED" : "RAW")
-        const inputHash = generateHash(specToUse)
-
-        // Check hash-based cache
-        if (!bust && !shouldFetch("workflow", inputHash)) {
-            const cached = getModule("workflow")
-            if (cached?.data) {
-                setSteps(parseSteps(cached.data))
-                setIsLoading(false)
-                return
-            }
+        if (!bust && workflow) {
+            setSteps(parseSteps(workflow))
+            setIsLoading(false)
+            return
         }
 
         try {
             const res = await fetch("/api/langchain/workflow", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ productDetails: specToUse }),
+                body: JSON.stringify({ context: ctx }),
             })
             
             if (!res.ok) throw new Error("Failed to fetch workflow")
             
             const data = await res.json()
-            updateModule("workflow", data, inputHash)
+            setWorkflow(data)
             setSteps(parseSteps(data))
         } catch (err) {
             console.error("Workflow generation failed:", err)
@@ -184,11 +176,7 @@ export default function WorkflowMap({ productDetails }) {
             hasRun.current = true
             handleGenerate()
         }
-
-        const onUpdate = () => handleGenerate(true)
-        window.addEventListener(PROJECT_EVENT, onUpdate)
-        return () => window.removeEventListener(PROJECT_EVENT, onUpdate)
-    }, [])
+    }, [ctx])
 
     return (
         <section style={{
@@ -203,7 +191,7 @@ export default function WorkflowMap({ productDetails }) {
                 <div>
                     <p style={{ fontSize: "10px", color: C.whiteLow, margin: 0, letterSpacing: "0.1em" }}>// WORKFLOW ENGINE</p>
                     <h3 style={{ fontSize: "14px", color: C.white, margin: "4px 0 0" }}>
-                        USER JOURNEY MAP {currentSpec === "REFINED" && <span style={{ color: C.ready }}>[REFINED ✓]</span>}
+                        USER JOURNEY MAP {ctx.type === "refined" && <span style={{ color: C.ready }}>[REFINED ✓]</span>}
                     </h3>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>

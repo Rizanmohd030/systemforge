@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { getCurrentContext, PROJECT_EVENT, generateHash, shouldFetch, getModule, updateModule } from "@/lib/project"
+import { useProjectStore } from "@/store/projectStore"
 
 // ─── COLORS (blueprint palette) ───────────────────────────────────────────────
 const C = {
@@ -49,8 +49,8 @@ export default function PromptBuilder({ productDetails }) {
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState("")
     const [isMock, setIsMock] = useState(false)
-    const [currentSpec, setCurrentSpec] = useState(null)
-    const [copiedContent, setCopiedContent] = useState(null)
+    const { getCurrentContext, setPrompts: setGlobalPrompts, prompts: globalPrompts } = useProjectStore()
+    const ctx = getCurrentContext()
     
     const hasRun = useRef(false)
 
@@ -59,34 +59,25 @@ export default function PromptBuilder({ productDetails }) {
         setError("")
         setIsMock(false)
 
-        const ctx = getCurrentContext()
-        const specToUse = ctx.type === "refined" ? ctx.data : productDetails
-        setCurrentSpec(ctx.type === "refined" ? "REFINED" : "RAW")
-        const inputHash = generateHash(specToUse)
-
-        // Check hash-based cache
-        if (!bust && !shouldFetch("prompts", inputHash)) {
-            const cached = getModule("prompts")
-            if (cached?.data) {
-                setPrompts(cached.data)
-                setExpandedPhase(0)
-                setIsLoading(false)
-                return
-            }
+        if (!bust && globalPrompts && globalPrompts.length > 0) {
+            setPrompts(globalPrompts)
+            setExpandedPhase(0)
+            setIsLoading(false)
+            return
         }
 
         try {
             const res = await fetch("/api/langchain/prompt", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ productDetails: specToUse }),
+                body: JSON.stringify({ context: ctx }),
             })
             
             if (!res.ok) throw new Error("Failed to fetch prompts")
             
             const data = await res.json()
             setPrompts(data)
-            updateModule("prompts", data, inputHash)
+            setGlobalPrompts(data)
             setExpandedPhase(0)
         } catch (err) {
             console.error("Prompt generation failed:", err)
@@ -103,11 +94,7 @@ export default function PromptBuilder({ productDetails }) {
             hasRun.current = true
             handleGenerate()
         }
-
-        const onUpdate = () => handleGenerate(true)
-        window.addEventListener(PROJECT_EVENT, onUpdate)
-        return () => window.removeEventListener(PROJECT_EVENT, onUpdate)
-    }, [])
+    }, [ctx])
 
     const copyToClipboard = async (text, id) => {
         try {

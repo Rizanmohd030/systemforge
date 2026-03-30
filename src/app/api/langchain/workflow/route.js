@@ -4,6 +4,8 @@ import { StructuredOutputParser } from "@langchain/core/output_parsers"
 import { z } from "zod"
 import { NextResponse } from "next/server"
 
+import { buildWorkflowPrompt } from "@/lib/prompts"
+
 // ─── SCHEMA ──────────────────────────────────────────────────
 const workflowSchema = z.object({
     nodes: z.array(z.object({
@@ -27,7 +29,7 @@ const parser = StructuredOutputParser.fromZodSchema(workflowSchema)
 
 export async function POST(request) {
     try {
-        const { productDetails } = await request.json()
+        const { context } = await request.json()
 
         const model = new ChatGoogleGenerativeAI({
             model: "gemini-2.5-flash",
@@ -35,31 +37,17 @@ export async function POST(request) {
             temperature: 0,
         })
 
+        const templateStr = buildWorkflowPrompt(context)
         const template = new PromptTemplate({
-            template: `You are a Visual Systems Designer. Map the core user journey/workflow for this product.
-
-STRICT CONTRAINTS:
-- No long sentences. 
-- Labels MUST be 2-3 words maximum.
-- Focus on the "Path" - how a user gets value from the system.
-
-Product Concept:
-{productDetails}
-
-{format_instructions}
-
-Visual Layout Rules:
-- Flow should generally go from top to bottom.
-- Space nodes properly for a React Flow canvas (0-600 range).`,
-            inputVariables: ["productDetails"],
+            template: templateStr,
+            inputVariables: [],
             partialVariables: { format_instructions: parser.getFormatInstructions() },
         })
 
         const chain = template.pipe(model).pipe(parser)
 
-        const result = await chain.invoke({
-            productDetails: JSON.stringify(productDetails),
-        })
+        // No input variables needed because context is embedded in the prompt string
+        const result = await chain.invoke({})
 
         return NextResponse.json(result)
     } catch (error) {

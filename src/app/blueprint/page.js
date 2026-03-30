@@ -8,7 +8,7 @@ import TechStack from "@/components/TechStack"
 import SystemArchitecture from "@/components/SystemArchitecture"
 import BuildRoadmap from "@/components/BuildRoadmap"
 import PromptBuilder from "@/components/PromptBuilder"
-import { getIdea, getRefinement, PROJECT_EVENT } from "@/lib/project"
+import { useProjectStore } from "@/store/projectStore"
 
 const nothingFont = Space_Grotesk({
   subsets: ["latin"],
@@ -77,27 +77,9 @@ const HUB = { x: 50, y: 50 }
 
 // ─── MAIN PAGE ────────────────────────────────────────────────────────────────
 export default function BlueprintPage() {
-  const [idea, setIdea] = useState("")
+  const { idea, refinement, isProcessing, validationWarnings } = useProjectStore()
+  const isRefined = !!refinement
   const [activeModule, setActiveModule] = useState(null)
-  const [isRefined, setIsRefined] = useState(false)
-
-  const checkRefinement = () => {
-    if (typeof window !== "undefined") {
-      const refined = getRefinement()
-      setIsRefined(!!refined)
-    }
-  }
-
-  useEffect(() => {
-    const stored = getIdea()
-    if (stored) setIdea(stored)
-
-    checkRefinement()
-
-    const onUpdate = () => checkRefinement()
-    window.addEventListener(PROJECT_EVENT, onUpdate)
-    return () => window.removeEventListener(PROJECT_EVENT, onUpdate)
-  }, [])
 
   return (
     <main className={`blueprint-bg min-h-screen relative overflow-hidden ${nothingFont.className}`} style={{ color: C.whiteHi }}>
@@ -210,6 +192,8 @@ export default function BlueprintPage() {
             return m
           })} 
           onSelect={mod => { if (mod.status === "READY" || mod.status === "REFINED") setActiveModule(mod.id) }} 
+          isProcessing={isProcessing}
+          validationWarnings={validationWarnings}
         />
       ) : (
         <div style={{ maxWidth: "860px", margin: "0 auto", padding: "80px 60px 80px 80px", position: "relative", zIndex: 10 }}>
@@ -225,7 +209,7 @@ export default function BlueprintPage() {
 }
 
 // ─── BLUEPRINT LAYOUT ─────────────────────────────────────────────────────────
-function HubDiagram({ modules, onSelect }) {
+function HubDiagram({ modules, onSelect, isProcessing, validationWarnings }) {
   const [hovered, setHovered] = useState(null)
   const containerRef = useRef(null)
   const hubRef = useRef(null)
@@ -329,8 +313,17 @@ function HubDiagram({ modules, onSelect }) {
           display: "flex", alignItems: "center", justifyContent: "center",
           maxWidth: 520,
         }}>
-          <div ref={hubRef}>
-            <Hub2D />
+          <div ref={hubRef} style={{ position: "relative" }}>
+            <Hub2D isProcessing={isProcessing} hasWarnings={validationWarnings?.length > 0} />
+            
+            {/* Context/Warning Display Logic on Hover/Always */}
+            {validationWarnings?.length > 0 && (
+              <div style={{ position: "absolute", top: "100%", left: "50%", transform: "translateX(-50%)", marginTop: "20px", textAlign: "center", width: "100%" }}>
+                 <div style={{ color: C.warn, fontSize: "10px", padding: "6px 12px", border: `1px solid ${C.warn}`, background: "rgba(255,200,80,0.1)", display: "inline-block" }}>
+                    ⚠ {validationWarnings.length} ARCHITECTURAL WARNING{validationWarnings.length > 1 ? "S" : ""} DETECTED
+                 </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -510,7 +503,7 @@ function ExplodedCard({ mod, style, isHovered, onHover, onClick, refCallback }) 
     </div>
   )
 }
-function Hub2D() {
+function Hub2D({ isProcessing, hasWarnings }) {
   const [mounted, setMounted] = useState(false)
   useEffect(() => { setMounted(true) }, [])
 
@@ -579,8 +572,14 @@ function Hub2D() {
     return `M ${cx + r * Math.cos(s)} ${cy + r * Math.sin(s)} A ${r} ${r} 0 0 1 ${cx + r * Math.cos(e)} ${cy + r * Math.sin(e)}`;
   });
 
-  // White color constants
+  // Dynamic states
   const w = (a) => `rgba(255,255,255,${a})`;
+  const processColor = isProcessing ? "100,220,255" : "255,255,255";
+  const warnColor = hasWarnings ? "255,200,80" : processColor;
+  const p = (a) => `rgba(${warnColor},${a})`;
+  
+  const spinSpeed = isProcessing ? 0.3 : 1; // 3x faster when processing
+
 
   return (
     <>
@@ -601,14 +600,14 @@ function Hub2D() {
         .arc-layer { position: absolute; inset: 0; }
         .arc-layer svg { width: 100%; height: 100%; }
 
-        .arc-ring-1 { animation: arc-spin 30s linear infinite; }
-        .arc-ring-2 { animation: arc-spin-rev 22s linear infinite; }
-        .arc-ring-3 { animation: arc-spin 16s linear infinite; }
-        .arc-ring-4 { animation: arc-spin-rev 12s linear infinite; }
-        .arc-ring-5 { animation: arc-spin 9s linear infinite; }
-        .arc-ring-ticks { animation: arc-spin-rev 40s linear infinite; }
-        .arc-ring-dim { animation: arc-spin 50s linear infinite; }
-        .arc-crosshairs { animation: arc-spin-rev 35s linear infinite; }
+        .arc-ring-1 { animation: arc-spin ${30 * spinSpeed}s linear infinite; }
+        .arc-ring-2 { animation: arc-spin-rev ${22 * spinSpeed}s linear infinite; }
+        .arc-ring-3 { animation: arc-spin ${16 * spinSpeed}s linear infinite; }
+        .arc-ring-4 { animation: arc-spin-rev ${12 * spinSpeed}s linear infinite; }
+        .arc-ring-5 { animation: arc-spin ${9 * spinSpeed}s linear infinite; }
+        .arc-ring-ticks { animation: arc-spin-rev ${40 * spinSpeed}s linear infinite; }
+        .arc-ring-dim { animation: arc-spin ${50 * spinSpeed}s linear infinite; }
+        .arc-crosshairs { animation: arc-spin-rev ${35 * spinSpeed}s linear infinite; }
 
         .arc-glow-ring {
           position: absolute; border-radius: 50%;
@@ -623,14 +622,14 @@ function Hub2D() {
         .arc-glow-r6 { inset: 72px; border-color: ${w(0.12)}; }
         .arc-glow-r7 { inset: 82px; border-color: ${w(0.20)}; box-shadow: 0 0 10px ${w(0.10)}, inset 0 0 6px ${w(0.05)}; }
         .arc-glow-r8 { inset: 92px; border-color: ${w(0.10)}; }
-        .arc-glow-r9 { inset: 100px; border-width: 1.5px; border-color: ${w(0.25)}; box-shadow: 0 0 14px ${w(0.12)}; animation: arc-ring-pulse 2s ease-in-out infinite 1s; }
+        .arc-glow-r9 { inset: 100px; border-width: 1.5px; border-color: ${p(0.35)}; box-shadow: 0 0 14px ${p(0.12)}; animation: arc-ring-pulse ${2 * spinSpeed}s ease-in-out infinite 1s; }
 
         .arc-core-halo {
           position: absolute;
           width: 50px; height: 50px;
           border-radius: 50%;
-          border: 1.5px solid ${w(0.3)};
-          box-shadow: 0 0 18px ${w(0.15)}, inset 0 0 12px ${w(0.08)};
+          border: 1.5px solid ${p(0.4)};
+          box-shadow: 0 0 18px ${p(0.25)}, inset 0 0 12px ${p(0.18)};
           z-index: 2;
         }
 
@@ -639,16 +638,16 @@ function Hub2D() {
           border-radius: 50%;
           background: radial-gradient(circle at 45% 45%,
             #ffffff 0%,
-            ${w(0.95)} 30%,
-            ${w(0.6)} 60%,
-            ${w(0.2)} 100%);
+            ${p(0.95)} 30%,
+            ${p(0.6)} 60%,
+            ${p(0.2)} 100%);
           box-shadow:
-            0 0 12px ${w(0.95)},
-            0 0 30px ${w(0.6)},
-            0 0 60px ${w(0.3)},
-            0 0 100px ${w(0.12)},
-            inset 0 0 10px ${w(0.5)};
-          animation: arc-core-pulse 3s ease-in-out infinite;
+            0 0 12px ${p(0.95)},
+            0 0 30px ${p(0.6)},
+            0 0 60px ${p(0.3)},
+            0 0 100px ${p(0.12)},
+            inset 0 0 10px ${p(0.5)};
+          animation: arc-core-pulse ${3 * spinSpeed}s ease-in-out infinite;
           position: absolute;
           z-index: 3;
         }
@@ -657,10 +656,10 @@ function Hub2D() {
         @keyframes arc-spin-rev   { from { transform: rotate(0deg) }   to { transform: rotate(-360deg) } }
         @keyframes arc-core-pulse {
           0%, 100% {
-            box-shadow: 0 0 12px ${w(0.95)}, 0 0 30px ${w(0.6)}, 0 0 60px ${w(0.3)}, 0 0 100px ${w(0.12)}, inset 0 0 10px ${w(0.5)};
+            box-shadow: 0 0 12px ${p(0.95)}, 0 0 30px ${p(0.6)}, 0 0 60px ${p(0.3)}, 0 0 100px ${p(0.12)}, inset 0 0 10px ${p(0.5)};
           }
           50% {
-            box-shadow: 0 0 18px ${w(1)}, 0 0 45px ${w(0.7)}, 0 0 80px ${w(0.35)}, 0 0 120px ${w(0.15)}, inset 0 0 15px ${w(0.6)};
+            box-shadow: 0 0 24px ${p(1)}, 0 0 60px ${p(0.8)}, 0 0 90px ${p(0.4)}, 0 0 140px ${p(0.2)}, inset 0 0 20px ${p(0.7)};
           }
         }
         @keyframes arc-aura-pulse {
@@ -674,7 +673,7 @@ function Hub2D() {
       `}</style>
 
       <div className="arc-reactor" suppressHydrationWarning>
-        <div className="arc-aura" />
+        <div className="arc-aura" style={{ background: hasWarnings ? `radial-gradient(circle, ${p(0.15)} 0%, ${p(0.06)} 40%, transparent 70%)` : `radial-gradient(circle, ${w(0.10)} 0%, ${w(0.04)} 40%, transparent 70%)` }} />
 
         {/* Concentric glow rings (static structural rings) */}
         <div className="arc-glow-ring arc-glow-r1" />
@@ -686,6 +685,9 @@ function Hub2D() {
         <div className="arc-glow-ring arc-glow-r7" />
         <div className="arc-glow-ring arc-glow-r8" />
         <div className="arc-glow-ring arc-glow-r9" />
+        
+        <div className="arc-core-halo" />
+        <div className="arc-core" />
 
         {/* Outer tick marks — slowest counter-rotation */}
         <div className="arc-layer arc-ring-ticks">

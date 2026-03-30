@@ -1,8 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { refineIdea } from "@/lib/gemini"
-import { saveRefinement, getRefinement } from "@/lib/project"
+import { useProjectStore } from "@/store/projectStore"
 
 // ─── COLORS (blueprint palette) ───────────────────────────────────────────────
 const C = {
@@ -20,8 +19,6 @@ const C = {
     cardBg: "rgba(8,25,90,0.70)",
     cardBorder: "rgba(255,255,255,0.18)",
 }
-
-// No longer need manual regex parsing!
 
 // ─── MOCK ─────────────────────────────────────────────────────────────────────
 const MOCK_RESULT = (idea) => ({
@@ -48,8 +45,11 @@ const MODULE_INFO = {
 }
 
 // ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
-export default function IdeaRefinement({ rawIdea }) {
-    const [refined, setRefined] = useState(null)
+export default function IdeaRefinement({ rawIdea: propRawIdea }) {
+    const { idea: globalIdea, refinement: globalRefinement, setRefinement, setProcessing } = useProjectStore()
+    const rawIdea = propRawIdea || globalIdea || "A custom software project"
+
+    const [refined, setRefinedLocal] = useState(null)
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState("")
     const [feedback, setFeedback] = useState("")
@@ -60,15 +60,13 @@ export default function IdeaRefinement({ rawIdea }) {
     const hasRun = useRef(false)
 
     useEffect(() => {
-        // Check if already saved
-        if (typeof window !== "undefined") {
-            const saved = getRefinement()
-            if (saved) setIsSaved(true)
+        if (globalRefinement) {
+            setIsSaved(true)
+            setRefinedLocal(globalRefinement)
         }
-
         if (hasRun.current) return
         hasRun.current = true
-        if (rawIdea) handleRefine()
+        if (rawIdea && !globalRefinement) handleRefine()
     }, [])
 
     const handleRefine = async (feedbackText = "") => {
@@ -87,7 +85,7 @@ export default function IdeaRefinement({ rawIdea }) {
             if (!res.ok) throw new Error("Refinement failed")
             
             const data = await res.json()
-            setRefined(data)
+            setRefinedLocal(data)
             
             // Update history for memory
             setHistory(prev => [
@@ -100,7 +98,7 @@ export default function IdeaRefinement({ rawIdea }) {
         } catch (err) {
             console.error("Refine error:", err)
             setError("Communication failure with Architect Brain.")
-            setRefined(MOCK_RESULT(rawIdea))
+            setRefinedLocal(MOCK_RESULT(rawIdea))
         } finally {
             setIsLoading(false)
         }
@@ -108,7 +106,7 @@ export default function IdeaRefinement({ rawIdea }) {
 
     const handleSave = () => {
         if (!refined) return
-        saveRefinement(refined)
+        setRefinement(refined)
         setIsSaved(true)
     }
 

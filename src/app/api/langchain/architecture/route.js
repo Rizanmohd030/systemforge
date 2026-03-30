@@ -4,6 +4,8 @@ import { StructuredOutputParser } from "@langchain/core/output_parsers"
 import { z } from "zod"
 import { NextResponse } from "next/server"
 
+import { buildArchitecturePrompt } from "@/lib/prompts"
+
 // ─── SCHEMA ──────────────────────────────────────────────────
 // This schema defines the structure for both the PRD and the React Flow diagram.
 const architectureSchema = z.object({
@@ -34,7 +36,7 @@ const parser = StructuredOutputParser.fromZodSchema(architectureSchema)
 
 export async function POST(request) {
     try {
-        const { productDetails } = await request.json()
+        const { context } = await request.json()
 
         const model = new ChatGoogleGenerativeAI({
             model: "gemini-2.5-flash",
@@ -42,28 +44,16 @@ export async function POST(request) {
             temperature: 0,
         })
 
+        const templateStr = buildArchitecturePrompt(context)
         const template = new PromptTemplate({
-            template: `You are a Lead Software Architect. Generate a comprehensive System Architecture and PRD based on the product concept.
-
-Concept:
-{productDetails}
-
-{format_instructions}
-
-Architecture Guidelines:
-- Place frontend/web nodes at the top (y: 0-100).
-- Place API/Backend nodes in the middle (y: 200-300).
-- Place Database/Storage nodes at the bottom (y: 400-500).
-- Space nodes horizontally (x) between 50 and 550.`,
-            inputVariables: ["productDetails"],
+            template: templateStr,
+            inputVariables: [],
             partialVariables: { format_instructions: parser.getFormatInstructions() },
         })
 
         const chain = template.pipe(model).pipe(parser)
 
-        const result = await chain.invoke({
-            productDetails: JSON.stringify(productDetails),
-        })
+        const result = await chain.invoke({})
 
         return NextResponse.json(result)
     } catch (error) {

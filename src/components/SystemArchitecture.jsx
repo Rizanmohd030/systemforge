@@ -9,7 +9,7 @@ import ReactFlow, {
   addEdge 
 } from "reactflow"
 import "reactflow/dist/style.css"
-import { getCurrentContext, PROJECT_EVENT, generateHash, shouldFetch, getModule, updateModule } from "@/lib/project"
+import { useProjectStore } from "@/store/projectStore"
 
 // ─── COLORS (blueprint palette) ───────────────────────────────────────────────
 const C = {
@@ -59,7 +59,8 @@ export default function SystemArchitecture({ productDetails }) {
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState("")
     const [isMock, setIsMock] = useState(false)
-    const [currentSpec, setCurrentSpec] = useState(null)
+    const { getCurrentContext, setArchitecture, architecture: globalArch } = useProjectStore()
+    const ctx = getCurrentContext()
     const hasRun = useRef(false)
 
     const onConnect = useCallback((params) => setEdges((eds) => addEdge(params, eds)), [setEdges])
@@ -90,32 +91,23 @@ export default function SystemArchitecture({ productDetails }) {
         setError("")
         setIsMock(false)
 
-        const ctx = getCurrentContext()
-        const specToUse = ctx.type === "refined" ? ctx.data : productDetails
-        setCurrentSpec(ctx.type === "refined" ? "REFINED" : "RAW")
-        const inputHash = generateHash(specToUse)
-
-        // Check hash-based cache
-        if (!bust && !shouldFetch("architecture", inputHash)) {
-            const cached = getModule("architecture")
-            if (cached?.data) {
-                applyArchData(cached.data)
-                setIsLoading(false)
-                return
-            }
+        if (!bust && globalArch) {
+            applyArchData(globalArch)
+            setIsLoading(false)
+            return
         }
 
         try {
             const res = await fetch("/api/langchain/architecture", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ productDetails: specToUse }),
+                body: JSON.stringify({ context: ctx }),
             })
             
             if (!res.ok) throw new Error("Failed to fetch architecture")
             
             const data = await res.json()
-            updateModule("architecture", data, inputHash)
+            setArchitecture(data)
             applyArchData(data)
         } catch (err) {
             console.error("Architecture generator error:", err)
@@ -134,11 +126,7 @@ export default function SystemArchitecture({ productDetails }) {
             hasRun.current = true
             handleGenerate()
         }
-
-        const onUpdate = () => handleGenerate(true)
-        window.addEventListener(PROJECT_EVENT, onUpdate)
-        return () => window.removeEventListener(PROJECT_EVENT, onUpdate)
-    }, [])
+    }, [ctx])
 
     return (
         <section style={{ display: "flex", flexDirection: "column", gap: "24px", fontFamily: "monospace", color: C.whiteHi }}>

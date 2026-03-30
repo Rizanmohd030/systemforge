@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { getCurrentContext, PROJECT_EVENT, generateHash, shouldFetch, getModule, updateModule } from "@/lib/project"
+import { useProjectStore } from "@/store/projectStore"
 
 // ─── COLORS (blueprint palette) ───────────────────────────────────────────────
 const C = {
@@ -56,39 +56,32 @@ export default function TechStack({ productDetails }) {
     const [analysis, setAnalysis] = useState(null)
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState("")
-    const [feedback, setFeedback] = useState("")
+    const { getCurrentContext, setStack, stack } = useProjectStore()
+    const ctx = getCurrentContext()
     const hasRun = useRef(false)
 
     const handleAnalyze = async (feedbackText = "", bust = false) => {
         setIsLoading(true)
         setError("")
         
-        const ctx = getCurrentContext()
-        const specToSearch = ctx.type === "refined" ? ctx.data : productDetails
-        const inputHash = generateHash(specToSearch)
-
-        // Check hash-based cache (skip if bust or feedback)
-        if (!bust && !feedbackText && !shouldFetch("stack", inputHash)) {
-            const cached = getModule("stack")
-            if (cached?.data) {
-                setAnalysis(cached.data)
-                setIsLoading(false)
-                return
-            }
+        if (!bust && !feedbackText && stack) {
+            setAnalysis(stack)
+            setIsLoading(false)
+            return
         }
 
         try {
             const res = await fetch("/api/langchain/stack", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ productDetails: specToSearch, feedback: feedbackText }),
+                body: JSON.stringify({ context: ctx, feedback: feedbackText }),
             })
             
             if (!res.ok) throw new Error("Failed to fetch tech stack")
             
             const data = await res.json()
             setAnalysis(data)
-            updateModule("stack", data, inputHash)
+            setStack(data)
         } catch (err) {
             console.error("TechStack error:", err)
             setAnalysis(MOCK_RESULT)
@@ -103,11 +96,7 @@ export default function TechStack({ productDetails }) {
             hasRun.current = true
             handleAnalyze()
         }
-
-        const onUpdate = () => handleAnalyze("", true)
-        window.addEventListener(PROJECT_EVENT, onUpdate)
-        return () => window.removeEventListener(PROJECT_EVENT, onUpdate)
-    }, [])
+    }, [ctx])
 
     const handleFeedbackSubmit = () => {
         if (!feedback.trim() || isLoading) return
