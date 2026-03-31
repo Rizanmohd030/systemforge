@@ -49,7 +49,7 @@ export async function POST(request) {
 
         const model = new ChatGoogleGenerativeAI({
             model: "gemini-2.5-flash",
-            apiKey: process.env.GEMINI_API_KEY,
+            apiKey: getGeminiKey(),
             temperature: 0, // Lower temperature is better for structured data!
         })
 

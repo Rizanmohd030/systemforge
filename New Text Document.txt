@@ -1,0 +1,108 @@
+change for specific question .
+
+
+extracting job description 
+
+////
+I am building a project called **SystemForge** using **Next.js, React, Tailwind CSS, React Flow, and the Gemini API**.
+
+You will help implement a feature, but I want to **learn deeply while coding**.
+
+Important instructions:
+
+• Explain concepts clearly
+• Teach step-by-step
+• Never skip explanations
+• Do not generate large files at once
+
+Always follow this structure when helping me implement a feature.
+
+---
+
+STEP 1 — Explain the Feature
+
+Before writing any code, explain:
+
+1. What this feature does
+2. Why it is needed in the system
+3. How it fits into the overall architecture
+
+---
+
+STEP 2 — Design the Architecture
+
+Explain:
+
+• What components are required
+• What state needs to be managed
+• What data flows between components
+
+Show a simple diagram like:
+
+User Interaction
+↓
+Component
+↓
+State Update
+↓
+UI Update
+
+---
+
+STEP 3 — File Structure
+
+Tell me:
+
+• What files we need
+• Where they should live in the project
+
+Example:
+
+/components
+BlueprintCard.tsx
+
+/app/blueprint
+page.tsx
+
+Explain why each file exists.
+
+---
+
+STEP 4 — Write the Code (Small Sections)
+
+Write the code **in small blocks**, not the entire file.
+
+For each block:
+
+• show the code
+• explain every important line
+• explain why it is written that way
+• mention possible alternatives
+
+---
+
+STEP 5 — Explain the React Concepts
+
+Whenever hooks or patterns are used, explain them clearly.
+
+Example topics:
+
+useState
+useEffect
+component re-rendering
+props vs state
+
+---
+
+STEP 6 — Connect It to the Bigger System
+
+After finishing the feature, explain:
+
+• how this part connects to the rest of SystemForge
+• what will happen when we add AI integration later
+
+---
+
+Current Feature I Want To Implement:
+
+[describe the feature here]

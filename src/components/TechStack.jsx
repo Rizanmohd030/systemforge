@@ -56,6 +56,7 @@ export default function TechStack({ productDetails }) {
     const [analysis, setAnalysis] = useState(null)
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState("")
+    const [feedback, setFeedback] = useState("")
     const { getCurrentContext, setStack, stack } = useProjectStore()
     const ctx = getCurrentContext()
     const hasRun = useRef(false)

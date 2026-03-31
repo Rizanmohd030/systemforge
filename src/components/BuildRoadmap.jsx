@@ -52,6 +52,7 @@ export default function BuildRoadmap({ productDetails }) {
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState("")
     const [isMock, setIsMock] = useState(false)
+    const [copiedContent, setCopiedContent] = useState(null)
     const { getCurrentContext, setRoadmap: setGlobalRoadmap, roadmap: globalRoadmap } = useProjectStore()
     const ctx = getCurrentContext()
     

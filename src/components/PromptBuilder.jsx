@@ -49,6 +49,7 @@ export default function PromptBuilder({ productDetails }) {
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState("")
     const [isMock, setIsMock] = useState(false)
+    const [copiedContent, setCopiedContent] = useState(null)
     const { getCurrentContext, setPrompts: setGlobalPrompts, prompts: globalPrompts } = useProjectStore()
     const ctx = getCurrentContext()
     

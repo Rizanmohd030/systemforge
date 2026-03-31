@@ -36,7 +36,7 @@ import { StringOutputParser } from "@langchain/core/output_parsers"
 import { NextResponse } from "next/server"
 
 // ── STEP 1A: Create the Model ──────────────────────────────
-// This replaces:  const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
+// This replaces:  const genAI = new GoogleGenerativeAI(getGeminiKey())
 //                 const model = genAI.getGenerativeModel(...)
 //
 // LangChain reads GOOGLE_API_KEY from env automatically, but we can
@@ -44,7 +44,7 @@ import { NextResponse } from "next/server"
 // (0 = deterministic, 1 = creative).
 const model = new ChatGoogleGenerativeAI({
     model: "gemini-2.5-flash",
-    apiKey: process.env.GEMINI_API_KEY,
+    apiKey: getGeminiKey(),
     temperature: 0.7,
 })
 
