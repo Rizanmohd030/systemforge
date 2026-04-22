@@ -105,7 +105,6 @@ export default function IdeaRefinement({ rawIdea: propRawIdea }) {
             const data = await res.json()
             console.log("✅ [handleRefine] Got data:", data.productName)
             setRefinedLocal(data)
-            setRetryCount(0) // Reset retry count on success
             
             // Update history for memory
             setHistory(prev => [
