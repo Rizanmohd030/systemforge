@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from "react"
 import { Space_Grotesk } from "next/font/google"
 import IdeaRefinement from "@/components/IdeaRefinement"
+import InteractiveGrid from "@/components/InteractiveGrid"
 import WorkflowMap from "@/components/WorkflowMap"
 import TechStack from "@/components/TechStack"
 import SystemArchitecture from "@/components/SystemArchitecture"
@@ -129,6 +130,9 @@ export default function BlueprintPage() {
 
   return (
     <main className={`blueprint-bg min-h-screen relative overflow-hidden ${nothingFont.className}`} style={{ color: C.whiteHi }}>
+
+      {/* Interactive grid — canvas replaces CSS grid lines */}
+      <InteractiveGrid />
 
       {/* TOP SCALE */}
       <div className="absolute top-6 left-0 right-0 text-[8px]"
