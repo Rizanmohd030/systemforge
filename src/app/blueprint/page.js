@@ -195,41 +195,39 @@ export default function BlueprintPage() {
         </div>
       </div>
 
-      {/* FIXED SIGNATURE (Centered at bottom) */}
+      {/* FOOTER — minimal floating, matches header */}
       <div style={{
-        position: "absolute", bottom: "30px", left: "50%", transform: "translateX(-50%)",
-        textAlign: "center", zIndex: 10
+        position: "absolute", bottom: "24px", left: 0, right: 0,
+        textAlign: "center", zIndex: 10, whiteSpace: "nowrap",
       }}>
-        <a 
-          href="https://rizanmi.vercel.app/" 
-          target="_blank" 
+        <a
+          href="https://rizanmi.vercel.app/"
+          target="_blank"
           rel="noopener noreferrer"
           style={{
-            fontSize: "14px", color: C.accentMid, letterSpacing: "0.2em", textDecoration: "none",
-            borderBottom: "1px solid transparent", transition: "all 0.3s ease", fontWeight: "600",
-            display: "inline-block", padding: "4px 10px", background: "rgba(8,25,90,0.6)",
-            backdropFilter: "blur(4px)", border: "1px solid rgba(255,255,255,0.05)"
+            display: "inline-flex", alignItems: "center", gap: "8px",
+            textDecoration: "none", transition: "color 0.3s ease",
+            fontSize: "14px", fontFamily: "monospace", letterSpacing: "0.18em",
+            color: "white", textTransform: "uppercase", fontWeight: 500,
           }}
-          onMouseEnter={e => { e.currentTarget.style.color = C.white; e.currentTarget.style.borderBottomColor = C.ready }}
-          onMouseLeave={e => { e.currentTarget.style.color = C.accentMid; e.currentTarget.style.borderBottomColor = "transparent" }}
+          onMouseEnter={e => e.currentTarget.style.color = "rgba(255,255,255,0.45)"}
+          onMouseLeave={e => e.currentTarget.style.color = "white"}
         >
-          // FORGED BY RIZAN
+          ARCHITECT: RIZAN
         </a>
       </div>
 
-      {/* HEADER */}
+      {/* HEADER — minimal floating */}
       <div style={{
-        position: "absolute", top: "58px", left: "50%", transform: "translateX(-50%)",
-        textAlign: "center", zIndex: 20, pointerEvents: "none",
-        background: "rgba(8,25,90,0.6)", backdropFilter: "blur(4px)",
-        padding: "6px 20px", border: "1px solid rgba(255,255,255,0.1)", whiteSpace: "nowrap",
+        position: "absolute", top: "80px", left: "50%", transform: "translateX(-50%)",
+        textAlign: "center", zIndex: 20, pointerEvents: "none", whiteSpace: "nowrap",
       }}>
-        <h1 style={{ fontSize: "13px", letterSpacing: "0.14em", color: C.white, margin: 0, fontWeight: 600 }}>
-          &gt; SYSTEMFORGE BLUEPRINT
+        <h1 style={{
+          fontSize: "21px", letterSpacing: "0.18em", color: "white",
+          margin: 0, fontWeight: 500, fontFamily: "monospace", textTransform: "uppercase",
+        }}>
+          SYSTEMFORGE 
         </h1>
-        <p style={{ fontSize: "9px", color: C.whiteLow, marginTop: "3px", letterSpacing: "0.06em" }}>
-          RAW IDEA: {idea} {isRefined && <span style={{ color: C.ready }}> (REFINED ✓)</span>}
-        </p>
       </div>
 
       {!activeModule ? (
