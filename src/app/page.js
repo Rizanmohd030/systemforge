@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
-import { saveIdea } from "@/lib/project"
+import { useProjectStore } from "@/store/projectStore"
 
 // ─── CONSTANTS ────────────────────────────────────────────────────────────────
 
@@ -23,6 +23,7 @@ const EXAMPLES = [
 
 export default function Home() {
   const router = useRouter()
+  const { setIdea: setStoreIdea } = useProjectStore()
 
   // ── Boot sequence state ───────────────────────────────────────────────────
   const [bootLines, setBootLines] = useState([])
@@ -90,7 +91,9 @@ export default function Home() {
       e.preventDefault()
       const value = inputRef.current?.value?.trim()
       if (!value || isSubmitting) return
-      saveIdea(value)
+      console.log("🔥 [Home] Saving idea to Zustand store:", value)
+      setStoreIdea(value)
+      console.log("✅ [Home] Idea saved")
       setIsSubmitting(true)
       setTimeout(() => router.push("/blueprint"), 1200)
       return

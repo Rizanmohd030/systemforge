@@ -5,6 +5,7 @@ import { z } from "zod"
 import { NextResponse } from "next/server"
 
 import { buildTechStackPrompt } from "@/lib/prompts"
+import { getGeminiKey } from "@/lib/keyManager"
 
 // ─── STEP 1: Define the Schema (Zod) ─────────────────────────
 // This schema matches the requirements of the TechStack component.
@@ -46,10 +47,25 @@ export async function POST(request) {
 
         return NextResponse.json(result)
     } catch (error) {
-        console.error("Tech Stack API Error:", error)
+        console.error("Tech Stack API Error:", error.message)
+        
+        let userMessage = "Unable to analyze tech stack. Please try again.";
+        let statusCode = 500;
+
+        if (error.message?.includes("RESOURCE_EXHAUSTED")) {
+            userMessage = "API rate limit reached. Please wait a moment and try again.";
+            statusCode = 429;
+        } else if (error.message?.includes("AUTHENTICATION_ERROR") || error.message?.includes("API key")) {
+            userMessage = "Authentication error. Please contact support.";
+            statusCode = 401;
+        } else if (error.message?.includes("timeout")) {
+            userMessage = "Request timed out. Please try again.";
+            statusCode = 504;
+        }
+
         return NextResponse.json(
-            { error: error.message || "Failed to analyze technology stack" },
-            { status: 500 }
+            { error: userMessage, code: error.message },
+            { status: statusCode }
         )
     }
 }

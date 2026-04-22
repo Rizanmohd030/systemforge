@@ -60,32 +60,52 @@ export default function IdeaRefinement({ rawIdea: propRawIdea }) {
     const hasRun = useRef(false)
 
     useEffect(() => {
+        console.log("🔍 [IdeaRefinement] Mounted with rawIdea:", rawIdea)
+        console.log("🔍 [IdeaRefinement] globalRefinement:", globalRefinement)
         if (globalRefinement) {
+            console.log("✅ [IdeaRefinement] Using cached refinement")
             setIsSaved(true)
             setRefinedLocal(globalRefinement)
         }
-        if (hasRun.current) return
+        if (hasRun.current) {
+            console.log("⚠️  [IdeaRefinement] Already ran, skipping")
+            return
+        }
         hasRun.current = true
-        if (rawIdea && !globalRefinement) handleRefine()
+        if (rawIdea && !globalRefinement) {
+            console.log("🚀 [IdeaRefinement] Calling handleRefine with:", rawIdea)
+            handleRefine()
+        } else {
+            console.log("⏭️  [IdeaRefinement] Skipping handleRefine - rawIdea:", !!rawIdea, "globalRefinement:", !!globalRefinement)
+        }
     }, [])
 
-    const handleRefine = async (feedbackText = "") => {
+    const handleRefine = async (feedbackText = "", retries = 0) => {
+        console.log("📡 [handleRefine] Starting - feedbackText:", feedbackText, "retries:", retries)
         setIsLoading(true)
         setError("")
         setIsMock(false)
         
         try {
             const input = feedbackText ? feedbackText : rawIdea
+            console.log("📤 [handleRefine] Sending request with input:", input)
             const res = await fetch("/api/langchain/refine", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ rawIdea: input, history }),
             })
             
-            if (!res.ok) throw new Error("Refinement failed")
+            console.log("📥 [handleRefine] Response status:", res.status)
+            if (!res.ok) {
+                const errorData = await res.json().catch(() => ({}))
+                console.error("❌ [handleRefine] API error:", errorData)
+                throw new Error(errorData.error || `Request failed (${res.status})`)
+            }
             
             const data = await res.json()
+            console.log("✅ [handleRefine] Got data:", data.productName)
             setRefinedLocal(data)
+            setRetryCount(0) // Reset retry count on success
             
             // Update history for memory
             setHistory(prev => [
@@ -96,8 +116,36 @@ export default function IdeaRefinement({ rawIdea: propRawIdea }) {
             
             setIteration(prev => prev + 1)
         } catch (err) {
-            console.error("Refine error:", err)
-            setError("Communication failure with Architect Brain.")
+            console.error("❌ [handleRefine] Error:", err.message)
+            
+            // Check for rate limit and retry
+            const isRateLimit = err.message?.includes("429") || err.message?.includes("rate limit")
+            if (isRateLimit && retries < 2) {
+                console.log("⏳ [handleRefine] Rate limited, will retry in 2s (attempt", retries + 1, "/2)")
+                // Auto-retry after delay (don't use setTimeout closure - pass retry count)
+                setError("Rate limit hit. Retrying in 2 seconds...")
+                setIsLoading(false)
+                setTimeout(() => {
+                    console.log("🔄 [handleRefine] Retrying after rate limit...")
+                    handleRefine(feedbackText, retries + 1)
+                }, 2000)
+                return
+            }
+            
+            // Provide helpful error messages
+            let errorMsg = "Unable to refine your idea. ";
+            if (isRateLimit) {
+                errorMsg += "Rate limit reached. Please wait and try again.";
+            } else if (err.message?.includes("401")) {
+                errorMsg += "Authentication failed. Please contact support.";
+            } else if (err.message?.includes("504")) {
+                errorMsg += "Request timed out. Try again in a moment.";
+            } else {
+                errorMsg += "Please try again.";
+            }
+            
+            console.log("⚠️  [handleRefine] Showing error:", errorMsg)
+            setError(errorMsg)
             setRefinedLocal(MOCK_RESULT(rawIdea))
         } finally {
             setIsLoading(false)
@@ -112,7 +160,7 @@ export default function IdeaRefinement({ rawIdea: propRawIdea }) {
 
     const handleFeedbackSubmit = () => {
         if (!feedback.trim() || isLoading) return
-        handleRefine(feedback, true)
+        handleRefine(feedback, 0)
         setFeedback("")
     }
 

@@ -77,9 +77,55 @@ const HUB = { x: 50, y: 50 }
 
 // ─── MAIN PAGE ────────────────────────────────────────────────────────────────
 export default function BlueprintPage() {
-  const { idea, refinement, isProcessing, validationWarnings } = useProjectStore()
+  const { idea, refinement, setIdea, isProcessing, validationWarnings } = useProjectStore()
   const isRefined = !!refinement
   const [activeModule, setActiveModule] = useState(null)
+  const [mounted, setMounted] = useState(false)
+
+  // Ensure idea is loaded from localStorage on mount
+  useEffect(() => {
+    console.log("📍 [BlueprintPage] useEffect mounting, idea:", idea)
+    setMounted(true)
+    // Check if idea is missing and try to load from storage
+    if (!idea && typeof window !== "undefined") {
+      console.log("⚠️  [BlueprintPage] Idea is empty, trying to load from storage...")
+      
+      // Try new Zustand storage location first
+      const projectKey = "systemforge_project_v2"
+      const projectData = localStorage.getItem(projectKey)
+      console.log("📦 [BlueprintPage] Zustand storage key data:", projectData?.substring(0, 100))
+      
+      let ideaText = null
+      if (projectData) {
+        try {
+          const parsed = JSON.parse(projectData)
+          ideaText = parsed.state?.idea || parsed.idea
+          console.log("✅ [BlueprintPage] Found idea in Zustand storage:", ideaText?.substring(0, 50))
+        } catch (e) {
+          console.error("❌ [BlueprintPage] Failed to parse Zustand storage:", e)
+        }
+      }
+      
+      // Fallback to old storage location
+      if (!ideaText) {
+        const oldIdea = localStorage.getItem("systemforge_idea")
+        console.log("📦 [BlueprintPage] Old localStorage value:", oldIdea)
+        ideaText = oldIdea
+      }
+      
+      if (ideaText) {
+        console.log("✅ [BlueprintPage] Setting idea:", ideaText)
+        setIdea(ideaText)
+      } else {
+        console.log("❌ [BlueprintPage] No idea found anywhere!")
+      }
+    } else {
+      console.log("✅ [BlueprintPage] Idea already exists:", idea?.substring(0, 50))
+    }
+  }, [idea, setIdea])
+
+  // Don't render until hydrated
+  if (!mounted) return <div style={{ background: "#000" }} />
 
   return (
     <main className={`blueprint-bg min-h-screen relative overflow-hidden ${nothingFont.className}`} style={{ color: C.whiteHi }}>

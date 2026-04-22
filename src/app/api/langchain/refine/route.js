@@ -6,6 +6,7 @@ import { z } from "zod"
 import { NextResponse } from "next/server"
 
 import { getRefinementSystemPrompt } from "@/lib/prompts"
+import { getGeminiKey } from "@/lib/keyManager"
 
 // ─── SCHEMA ──────────────────────────────────────────────────
 // This schema includes "Architect Advice" - the branching logic.
@@ -26,12 +27,14 @@ const parser = StructuredOutputParser.fromZodSchema(refineSchema)
 export async function POST(request) {
     try {
         const { rawIdea, history = [] } = await request.json()
+        console.log("🔧 [API /refine] Received request - rawIdea:", rawIdea?.substring(0, 50), "history length:", history.length)
 
         const model = new ChatGoogleGenerativeAI({
             model: "gemini-2.5-flash",
             apiKey: getGeminiKey(),
-            temperature: 0.3, // Slight creativity for advice, but low for structure
+            temperature: 0.3,
         })
+        console.log("🔌 [API /refine] Model initialized")
 
         // ─── CONVERSATIONAL PROMPT ───────────────────────────
         const prompt = ChatPromptTemplate.fromMessages([
@@ -46,19 +49,40 @@ export async function POST(request) {
         )
 
         const chain = prompt.pipe(model).pipe(parser)
+        console.log("⛓️  [API /refine] Chain created")
 
         const result = await chain.invoke({
             input: rawIdea,
             history: chatHistory,
             format_instructions: parser.getFormatInstructions()
         })
-
+        
+        console.log("✅ [API /refine] Response generated:", result.productName)
         return NextResponse.json(result)
     } catch (error) {
-        console.error("Refinement API Error:", error)
+        console.error("❌ [API /refine] Error:", error.message)
+        
+        // Provide helpful user-facing error messages
+        let userMessage = "Unable to refine your idea right now. Please try again.";
+        let statusCode = 500;
+
+        if (error.message?.includes("RESOURCE_EXHAUSTED")) {
+            console.log("⚠️  [API /refine] Rate limit exceeded")
+            userMessage = "API rate limit reached. Please wait a moment and try again.";
+            statusCode = 429;
+        } else if (error.message?.includes("AUTHENTICATION_ERROR") || error.message?.includes("API key")) {
+            console.log("🔐 [API /refine] Auth error")
+            userMessage = "Authentication error. Please contact support.";
+            statusCode = 401;
+        } else if (error.message?.includes("timeout") || error.message?.includes("DEADLINE_EXCEEDED")) {
+            console.log("⏱️  [API /refine] Timeout")
+            userMessage = "Request timed out. This might be a temporary issue. Please try again.";
+            statusCode = 504;
+        }
+
         return NextResponse.json(
-            { error: error.message || "Failed to refine idea" },
-            { status: 500 }
+            { error: userMessage, code: error.message },
+            { status: statusCode }
         )
     }
 }

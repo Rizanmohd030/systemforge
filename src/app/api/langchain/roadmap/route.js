@@ -5,6 +5,7 @@ import { z } from "zod"
 import { NextResponse } from "next/server"
 
 import { buildRoadmapPrompt } from "@/lib/prompts"
+import { getGeminiKey } from "@/lib/keyManager"
 
 // ─── SCHEMA ──────────────────────────────────────────────────
 const roadmapSchema = z.array(z.object({
@@ -40,10 +41,25 @@ export async function POST(request) {
 
         return NextResponse.json(result)
     } catch (error) {
-        console.error("Roadmap API Error:", error)
+        console.error("Roadmap API Error:", error.message)
+        
+        let userMessage = "Unable to generate roadmap. Please try again.";
+        let statusCode = 500;
+
+        if (error.message?.includes("RESOURCE_EXHAUSTED")) {
+            userMessage = "API rate limit reached. Please wait and try again.";
+            statusCode = 429;
+        } else if (error.message?.includes("AUTHENTICATION_ERROR") || error.message?.includes("API key")) {
+            userMessage = "Authentication error. Please contact support.";
+            statusCode = 401;
+        } else if (error.message?.includes("timeout")) {
+            userMessage = "Request timed out. Please try again.";
+            statusCode = 504;
+        }
+
         return NextResponse.json(
-            { error: error.message || "Failed to generate roadmap" },
-            { status: 500 }
+            { error: userMessage, code: error.message },
+            { status: statusCode }
         )
     }
 }
