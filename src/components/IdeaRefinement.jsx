@@ -18,6 +18,7 @@ const C = {
     error: "rgba(255,100,100,0.9)",
     cardBg: "rgba(8,25,90,0.70)",
     cardBorder: "rgba(255,255,255,0.18)",
+    darkBg: "rgba(4,12,45,1)",
 }
 
 // ─── MOCK ─────────────────────────────────────────────────────────────────────
@@ -60,50 +61,38 @@ export default function IdeaRefinement({ rawIdea: propRawIdea }) {
     const hasRun = useRef(false)
 
     useEffect(() => {
-        console.log("🔍 [IdeaRefinement] Mounted with rawIdea:", rawIdea)
-        console.log("🔍 [IdeaRefinement] globalRefinement:", globalRefinement)
         if (globalRefinement) {
-            console.log("✅ [IdeaRefinement] Using cached refinement")
             setIsSaved(true)
             setRefinedLocal(globalRefinement)
         }
         if (hasRun.current) {
-            console.log("⚠️  [IdeaRefinement] Already ran, skipping")
             return
         }
         hasRun.current = true
         if (rawIdea && !globalRefinement) {
-            console.log("🚀 [IdeaRefinement] Calling handleRefine with:", rawIdea)
             handleRefine()
-        } else {
-            console.log("⏭️  [IdeaRefinement] Skipping handleRefine - rawIdea:", !!rawIdea, "globalRefinement:", !!globalRefinement)
         }
     }, [])
 
     const handleRefine = async (feedbackText = "", retries = 0) => {
-        console.log("📡 [handleRefine] Starting - feedbackText:", feedbackText, "retries:", retries)
         setIsLoading(true)
         setError("")
         setIsMock(false)
         
         try {
             const input = feedbackText ? feedbackText : rawIdea
-            console.log("📤 [handleRefine] Sending request with input:", input)
             const res = await fetch("/api/langchain/refine", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ rawIdea: input, history }),
             })
             
-            console.log("📥 [handleRefine] Response status:", res.status)
             if (!res.ok) {
                 const errorData = await res.json().catch(() => ({}))
-                console.error("❌ [handleRefine] API error:", errorData)
                 throw new Error(errorData.error || `Request failed (${res.status})`)
             }
             
             const data = await res.json()
-            console.log("✅ [handleRefine] Got data:", data.productName)
             setRefinedLocal(data)
             
             // Update history for memory
@@ -115,17 +104,12 @@ export default function IdeaRefinement({ rawIdea: propRawIdea }) {
             
             setIteration(prev => prev + 1)
         } catch (err) {
-            console.error("❌ [handleRefine] Error:", err.message)
-            
             // Check for rate limit and retry
             const isRateLimit = err.message?.includes("429") || err.message?.includes("rate limit")
             if (isRateLimit && retries < 2) {
-                console.log("⏳ [handleRefine] Rate limited, will retry in 2s (attempt", retries + 1, "/2)")
-                // Auto-retry after delay (don't use setTimeout closure - pass retry count)
                 setError("Rate limit hit. Retrying in 2 seconds...")
                 setIsLoading(false)
                 setTimeout(() => {
-                    console.log("🔄 [handleRefine] Retrying after rate limit...")
                     handleRefine(feedbackText, retries + 1)
                 }, 2000)
                 return
@@ -143,7 +127,6 @@ export default function IdeaRefinement({ rawIdea: propRawIdea }) {
                 errorMsg += "Please try again.";
             }
             
-            console.log("⚠️  [handleRefine] Showing error:", errorMsg)
             setError(errorMsg)
             setRefinedLocal(MOCK_RESULT(rawIdea))
         } finally {
@@ -164,180 +147,209 @@ export default function IdeaRefinement({ rawIdea: propRawIdea }) {
     }
 
     return (
-        <section style={{ fontFamily: "monospace", color: C.whiteHi }}>
-
-            {/* ── MODULE INFO ──────────────────────────────────────────────────── */}
-            <div style={{
-                border: `1px solid ${C.cardBorder}`,
-                background: C.cardBg,
-                padding: "20px 24px",
-                marginBottom: "28px",
-                backdropFilter: "blur(6px)",
-            }}>
-                <p style={{ fontSize: "10px", color: C.whiteLow, marginBottom: "10px", letterSpacing: "0.1em" }}>
-          // ABOUT THIS MODULE
-                </p>
-                <p style={{ fontSize: "13px", color: C.whiteMid, lineHeight: "1.7", marginBottom: "18px" }}>
-                    {MODULE_INFO.description}
-                </p>
-
-                {/* Feature grid */}
-                <div style={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))",
-                    gap: "10px",
-                    marginBottom: "18px",
-                }}>
-                    {MODULE_INFO.features.map((f, i) => (
-                        <div key={i} style={{ borderLeft: `2px solid ${C.accentMid}`, paddingLeft: "10px" }}>
-                            <p style={{ fontSize: "11px", color: C.whiteHi, marginBottom: "2px" }}>{f.label}</p>
-                            <p style={{ fontSize: "10px", color: C.whiteLow, lineHeight: "1.4" }}>{f.detail}</p>
-                        </div>
-                    ))}
-                </div>
-
-                <p style={{ fontSize: "11px", color: C.whiteLow, lineHeight: "1.6", borderTop: `1px solid ${C.whiteGhost}`, paddingTop: "12px" }}>
-                    ↳ {MODULE_INFO.howTo}
-                </p>
-            </div>
-
-            {/* ── LOADING ──────────────────────────────────────────────────────── */}
-            {isLoading && (
-                <div style={{ color: C.accentMid }}>
-                    <p>&gt; {iteration > 0 ? "Regenerating with feedback..." : "Analyzing idea..."}</p>
-                    <p>&gt; Generating refined concept...</p>
-                    <span style={{
-                        display: "inline-block", width: 8, height: 14,
-                        background: C.accent, marginTop: 8,
-                        animation: "bp-dot 1s steps(2,start) infinite",
+        <section style={{
+            fontFamily: "monospace",
+            color: C.whiteHi,
+            background: C.darkBg,
+            minHeight: "100vh",
+            padding: "40px 60px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "40px",
+        }}>
+            {/* ─── LOADING STATE ─────────────────────────────────────────────────── */}
+            {isLoading && !refined ? (
+                <div style={{ textAlign: "center", paddingTop: "100px" }}>
+                    <p style={{ fontSize: "16px", color: C.accentMid, letterSpacing: "0.2em", marginBottom: "20px" }}>
+                        {iteration > 0 ? "REGENERATING CONCEPT..." : "ANALYZING YOUR IDEA..."}
+                    </p>
+                    <div style={{
+                        width: "300px",
+                        height: "4px",
+                        background: `linear-gradient(90deg, transparent, ${C.accent}, transparent)`,
+                        margin: "0 auto",
+                        animation: "pulse 1.5s infinite"
                     }} />
                 </div>
-            )}
-
-            {/* ── ERROR ────────────────────────────────────────────────────────── */}
-            {error && <p style={{ color: C.error }}>{error}</p>}
-
-            {/* ── QUOTA WARNING ────────────────────────────────────────────────── */}
-            {isMock && (
-                <p style={{ color: C.warn, fontSize: "11px", marginBottom: "12px" }}>
-                    ⚠ QUOTA EXCEEDED — showing mock result. Try again later or upgrade your plan.
-                </p>
-            )}
-
-            {/* ── RESULTS ──────────────────────────────────────────────────────── */}
-            {refined && !isLoading && (
-                <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: "4px" }}>
-                        <div>
-                            {iteration > 1 && (
-                                <p style={{ fontSize: "10px", color: C.whiteLow, letterSpacing: "0.06em", marginBottom: "4px" }}>
-                                    // ITERATION {iteration} — REFINED WITH FEEDBACK
-                                </p>
-                            )}
-                            <p style={{ fontSize: "10px", color: isSaved ? C.ready : C.accent, letterSpacing: "0.1em", fontWeight: "bold", margin: 0 }}>
-                                {isSaved ? "✓ CONCEPT SAVED TO BLUEPRINT" : "// CONCEPT READY FOR BLUEPRINT"}
+            ) : refined ? (
+                <>
+                    {/* ────── HEADER ────────────────────────────────────────────────── */}
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "40px" }}>
+                        <div style={{ flex: 1 }}>
+                            <p style={{ fontSize: "12px", color: C.whiteLow, letterSpacing: "0.15em", marginBottom: "8px" }}>
+                                REFINED CONCEPT
+                            </p>
+                            <h1 style={{ fontSize: "48px", color: C.white, margin: "0 0 20px 0", fontWeight: "700" }}>
+                                {refined.productName}
+                            </h1>
+                            <p style={{ fontSize: "16px", color: C.whiteMid, lineHeight: "1.7", maxWidth: "600px" }}>
+                                {refined.description}
                             </p>
                         </div>
-                        <button
-                            onClick={handleSave}
-                            disabled={isSaved || isLoading}
-                            style={{
-                                background: isSaved ? "rgba(100,220,255,0.1)" : "rgba(100,220,255,0.25)",
-                                border: `1px solid ${isSaved ? C.ready : "rgba(255,255,255,0.4)"}`,
-                                color: isSaved ? C.ready : C.white,
-                                padding: "6px 14px",
-                                fontSize: "11px",
-                                cursor: isSaved ? "default" : "pointer",
-                                fontFamily: "monospace",
-                                letterSpacing: "0.05em",
-                                transition: "all 0.15s",
-                            }}
-                        >
-                            {isSaved ? "[ SAVED ]" : "[ SAVE CONCEPT ]"}
-                        </button>
+                        <div style={{ display: "flex", gap: "12px", flexDirection: "column" }}>
+                            <button
+                                onClick={() => handleRefine("", 0)}
+                                disabled={isLoading}
+                                style={{
+                                    background: "rgba(120,180,255,0.2)",
+                                    border: `1px solid ${C.accent}`,
+                                    color: C.accent,
+                                    padding: "12px 16px",
+                                    fontSize: "12px",
+                                    cursor: "pointer",
+                                    fontFamily: "monospace",
+                                    letterSpacing: "0.05em",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: "8px",
+                                    transition: "all 0.2s",
+                                }}
+                                onMouseEnter={e => e.currentTarget.style.background = "rgba(120,180,255,0.35)"}
+                                onMouseLeave={e => e.currentTarget.style.background = "rgba(120,180,255,0.2)"}
+                                title="Generate a new product name"
+                            >
+                                🔄 REFRESH NAME
+                            </button>
+                            <button
+                                onClick={handleSave}
+                                disabled={isSaved || isLoading}
+                                style={{
+                                    background: isSaved ? "rgba(100,220,255,0.15)" : "rgba(100,220,255,0.35)",
+                                    border: `1px solid ${isSaved ? C.ready : C.accent}`,
+                                    color: isSaved ? C.ready : C.white,
+                                    padding: "12px 16px",
+                                    fontSize: "12px",
+                                    cursor: isSaved ? "default" : "pointer",
+                                    fontFamily: "monospace",
+                                    letterSpacing: "0.05em",
+                                    transition: "all 0.2s",
+                                }}
+                            >
+                                {isSaved ? "✓ SAVED" : "[ SAVE CONCEPT ]"}
+                            </button>
+                        </div>
                     </div>
 
-                    <ResultCard label="PRODUCT NAME" value={refined.productName} />
-                    <ResultCard label="DESCRIPTION" value={refined.description} />
-                    <ResultCard label="TARGET USERS" value={refined.targetUsers} isList />
-                    <ResultCard label="CORE FEATURES" value={refined.coreFeatures} isList />
+                    {/* ────── TWO COLUMN LAYOUT ─────────────────────────────────────── */}
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "60px" }}>
+                        
+                        {/* LEFT: TARGET USERS & FEATURES */}
+                        <div style={{ display: "flex", flexDirection: "column", gap: "40px" }}>
+                            
+                            {/* TARGET USERS */}
+                            <div>
+                                <p style={{ fontSize: "11px", color: C.whiteLow, letterSpacing: "0.15em", marginBottom: "16px", textTransform: "uppercase" }}>
+                                    Who uses this
+                                </p>
+                                <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                                    {refined.targetUsers?.map((user, i) => (
+                                        <div key={i} style={{
+                                            borderLeft: `3px solid ${C.accent}`,
+                                            paddingLeft: "20px",
+                                            paddingTop: "8px",
+                                            paddingBottom: "8px",
+                                        }}>
+                                            <p style={{ fontSize: "16px", color: C.white, margin: 0, fontWeight: "500" }}>{user}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
 
-                    {/* ── ARCHITECT BRANCHES ───────────────────────────────────── */}
-                    {refined.architectAdvice && (
-                        <div style={{ marginTop: "10px" }}>
-                            <p style={{ fontSize: "10px", color: C.accent, letterSpacing: "0.15em", marginBottom: "12px" }}>
-                                // ARCHITECT'S ADVICE: CHOOSE YOUR PATH
+                            {/* CORE FEATURES */}
+                            <div>
+                                <p style={{ fontSize: "11px", color: C.whiteLow, letterSpacing: "0.15em", marginBottom: "16px", textTransform: "uppercase" }}>
+                                    Core features
+                                </p>
+                                <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                                    {refined.coreFeatures?.map((feature, i) => (
+                                        <div key={i} style={{
+                                            borderLeft: `3px solid ${C.ready}`,
+                                            paddingLeft: "20px",
+                                            paddingTop: "8px",
+                                            paddingBottom: "8px",
+                                        }}>
+                                            <p style={{ fontSize: "16px", color: C.white, margin: 0, fontWeight: "500" }}>{feature}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* RIGHT: STRATEGIC PATHS */}
+                        <div>
+                            <p style={{ fontSize: "11px", color: C.whiteLow, letterSpacing: "0.15em", marginBottom: "24px", textTransform: "uppercase" }}>
+                                Strategic approaches
                             </p>
-                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
-                                {refined.architectAdvice.map((advice, i) => (
-                                    <div 
-                                        key={i} 
-                                        onClick={() => setFeedback(`I choose the ${advice.path} direction. ${advice.impact}`)}
+                            <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                                {refined.architectAdvice?.map((advice, i) => (
+                                    <div
+                                        key={i}
+                                        onClick={() => setFeedback(`Focus on ${advice.path}. ${advice.impact}`)}
                                         style={{
-                                            border: `1px solid ${C.accentLow}`,
-                                            background: "rgba(120,180,255,0.05)",
-                                            padding: "12px",
+                                            background: "rgba(8,25,90,0.7)",
+                                            border: `2px solid ${C.accentMid}`,
+                                            padding: "24px",
                                             cursor: "pointer",
-                                            transition: "all 0.2s"
+                                            transition: "all 0.3s",
+                                            borderRadius: "4px",
                                         }}
-                                        onMouseEnter={e => e.currentTarget.style.background = "rgba(120,180,255,0.15)"}
-                                        onMouseLeave={e => e.currentTarget.style.background = "rgba(120,180,255,0.05)"}
+                                        onMouseEnter={e => {
+                                            e.currentTarget.style.background = "rgba(20,60,160,0.5)"
+                                            e.currentTarget.style.borderColor = C.ready
+                                        }}
+                                        onMouseLeave={e => {
+                                            e.currentTarget.style.background = "rgba(8,25,90,0.7)"
+                                            e.currentTarget.style.borderColor = C.accentMid
+                                        }}
                                     >
-                                        <p style={{ fontSize: "11px", color: C.ready, marginBottom: "4px", fontWeight: "bold" }}>↳ {advice.path}</p>
-                                        <p style={{ fontSize: "10px", color: C.whiteMid, lineHeight: "1.4", margin: 0 }}>{advice.impact}</p>
+                                        <p style={{ fontSize: "14px", color: C.ready, marginBottom: "12px", fontWeight: "bold", letterSpacing: "0.05em" }}>
+                                            {advice.path}
+                                        </p>
+                                        <p style={{ fontSize: "13px", color: C.whiteMid, lineHeight: "1.6", margin: 0 }}>
+                                            {advice.impact}
+                                        </p>
                                     </div>
                                 ))}
                             </div>
                         </div>
-                    )}
+                    </div>
 
-                    {/* ── FEEDBACK + REGENERATE ─────────────────────────────────── */}
-                    <div style={{
-                        marginTop: "8px",
-                        border: `1px solid ${C.cardBorder}`,
-                        padding: "16px",
-                        background: C.cardBg,
-                        backdropFilter: "blur(6px)",
-                    }}>
-                        <p style={{ fontSize: "10px", color: C.whiteLow, marginBottom: "10px", letterSpacing: "0.08em" }}>
-              // FEEDBACK & REGENERATE
+                    {/* ────── FEEDBACK SECTION ──────────────────────────────────────── */}
+                    <div style={{ marginTop: "20px" }}>
+                        <p style={{ fontSize: "11px", color: C.whiteLow, letterSpacing: "0.15em", marginBottom: "20px", textTransform: "uppercase" }}>
+                            Refine further
                         </p>
-                        <p style={{ fontSize: "12px", color: C.whiteMid, marginBottom: "10px" }}>
-                            Not quite right? Tell the AI what to change:
-                        </p>
-                        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                        <div style={{ display: "flex", gap: "12px" }}>
                             <input
                                 type="text"
                                 value={feedback}
                                 onChange={e => setFeedback(e.target.value)}
                                 onKeyDown={e => e.key === "Enter" && handleFeedbackSubmit()}
-                                placeholder="e.g. Focus only on B2B, remove consumer features"
+                                placeholder="e.g., Focus only on B2B, remove consumer features..."
                                 style={{
                                     flex: 1,
-                                    minWidth: "200px",
-                                    background: "rgba(8,25,90,0.5)",
-                                    border: `1px solid ${feedback.trim() ? "rgba(255,255,255,0.45)" : C.cardBorder}`,
-                                    color: C.whiteHi,
-                                    padding: "9px 12px",
+                                    background: "rgba(255,255,255,0.04)",
+                                    border: `1px solid ${feedback.trim() ? C.accent : C.cardBorder}`,
+                                    color: C.white,
+                                    padding: "14px 16px",
                                     fontFamily: "monospace",
-                                    fontSize: "12px",
+                                    fontSize: "13px",
                                     outline: "none",
-                                    transition: "border 0.15s",
+                                    transition: "all 0.2s",
                                 }}
                             />
                             <button
                                 onClick={handleFeedbackSubmit}
                                 disabled={isLoading || !feedback.trim()}
                                 style={{
-                                    border: `1px solid ${feedback.trim() ? "rgba(255,255,255,0.6)" : C.cardBorder}`,
-                                    background: feedback.trim() ? "rgba(20,60,160,0.6)" : "transparent",
+                                    border: `1px solid ${feedback.trim() ? C.accent : C.cardBorder}`,
+                                    background: feedback.trim() ? "rgba(120,180,255,0.25)" : "transparent",
                                     color: feedback.trim() ? C.white : C.whiteLow,
-                                    padding: "9px 18px",
+                                    padding: "14px 24px",
                                     fontFamily: "monospace",
-                                    fontSize: "12px",
+                                    fontSize: "13px",
                                     cursor: feedback.trim() ? "pointer" : "default",
-                                    transition: "all 0.15s",
+                                    transition: "all 0.2s",
                                     whiteSpace: "nowrap",
                                     letterSpacing: "0.05em",
                                 }}
@@ -345,38 +357,28 @@ export default function IdeaRefinement({ rawIdea: propRawIdea }) {
                                 [ REGENERATE ]
                             </button>
                         </div>
-                        <p style={{ fontSize: "10px", color: C.whiteLow, marginTop: "8px" }}>
-                            ↳ Press Enter or click REGENERATE. Each run calls the AI fresh.
-                        </p>
                     </div>
 
-                </div>
-            )}
-        </section>
-    )
-}
+                    {/* ────── STATUS & ERROR ────────────────────────────────────────── */}
+                    {isMock && (
+                        <p style={{ color: C.warn, fontSize: "11px", marginTop: "20px", letterSpacing: "0.05em" }}>
+                            ⚠ Using simulated data. Upgrade your plan or try again later.
+                        </p>
+                    )}
+                    {error && (
+                        <p style={{ color: C.error, fontSize: "11px", marginTop: "20px", letterSpacing: "0.05em" }}>
+                            ✕ {error}
+                        </p>
+                    )}
+                </>
+            ) : null}
 
-// ─── RESULT CARD ──────────────────────────────────────────────────────────────
-function ResultCard({ label, value, isList = false }) {
-    return (
-        <div style={{
-            border: "1px solid rgba(255,255,255,0.15)",
-            padding: "14px 16px",
-            background: "rgba(8,25,90,0.55)",
-            backdropFilter: "blur(4px)",
-        }}>
-            <p style={{ fontSize: "10px", color: "rgba(255,255,255,0.35)", marginBottom: "8px", letterSpacing: "0.1em" }}>
-                {label}
-            </p>
-            {isList ? (
-                <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "4px" }}>
-                    {value.map((item, i) => (
-                        <li key={i} style={{ fontSize: "13px", color: "rgba(255,255,255,0.88)" }}>• {item}</li>
-                    ))}
-                </ul>
-            ) : (
-                <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.88)", lineHeight: "1.5" }}>{value}</p>
-            )}
-        </div>
+            <style>{`
+                @keyframes pulse {
+                    0%, 100% { opacity: 0.3; }
+                    50% { opacity: 1; }
+                }
+            `}</style>
+        </section>
     )
 }

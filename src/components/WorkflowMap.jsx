@@ -3,6 +3,9 @@
 import { useState, useEffect, useRef } from "react"
 import { useProjectStore } from "@/store/projectStore"
 
+import ReactFlow, { Background, Controls, useNodesState, useEdgesState } from "reactflow"
+import "reactflow/dist/style.css"
+
 // ─── COLORS (blueprint palette) ───────────────────────────────────────────────
 const C = {
     white: "rgba(255,255,255,1)",
@@ -20,122 +23,52 @@ const C = {
 }
 
 // ─── MOCK DATA ────────────────────────────────────────────────────────────────
-const MOCK_STEPS = [
-    { id: "1", label: "User Landing" },
-    { id: "2", label: "Input System Idea" },
-    { id: "3", label: "Generate Blueprint" },
-    { id: "4", label: "Review Roadmap" },
-    { id: "5", label: "Export Code" },
-]
-
-// ─── STEP NODE ────────────────────────────────────────────────────────────────
-function StepNode({ step, index, total, isHovered, onHover }) {
-    const isFirst = index === 0
-    const isLast = index === total - 1
-
-    return (
-        <div
-            onMouseEnter={() => onHover(step.id)}
-            onMouseLeave={() => onHover(null)}
-            style={{ display: "flex", flexDirection: "column", alignItems: "center", position: "relative" }}
-        >
-            {/* Connector line from previous node */}
-            {!isFirst && (
-                <div style={{
-                    width: "1px", height: "28px",
-                    background: `linear-gradient(to bottom, ${C.whiteLow}, ${C.whiteGhost})`,
-                    marginBottom: "0px",
-                }} />
-            )}
-
-            {/* Arrow head before the node (except first) */}
-            {!isFirst && (
-                <div style={{
-                    width: 0, height: 0,
-                    borderLeft: "5px solid transparent",
-                    borderRight: "5px solid transparent",
-                    borderTop: `6px solid ${C.whiteLow}`,
-                    marginBottom: "4px",
-                }} />
-            )}
-
-            {/* Step Card */}
-            <div style={{
-                display: "flex", alignItems: "center", gap: "12px",
-                position: "relative",
-            }}>
-                {/* Step number circle */}
-                <div style={{
-                    width: 28, height: 28, borderRadius: "50%",
-                    border: `1.5px solid ${isHovered ? C.ready : C.whiteLow}`,
-                    background: isHovered ? "rgba(100,220,255,0.08)" : "rgba(8,25,90,0.5)",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    fontSize: "10px", fontFamily: "monospace", color: isHovered ? C.ready : C.whiteMid,
-                    fontWeight: "600", letterSpacing: "0.05em",
-                    transition: "all 0.25s ease",
-                    flexShrink: 0,
-                }}>
-                    {String(index + 1).padStart(2, "0")}
-                </div>
-
-                {/* Label card */}
-                <div style={{
-                    border: `1px solid ${isHovered ? "rgba(100,220,255,0.4)" : C.cardBorder}`,
-                    background: isHovered ? "rgba(20,60,160,0.25)" : C.cardBg,
-                    padding: "10px 20px",
-                    minWidth: 180,
-                    transition: "all 0.25s ease",
-                    position: "relative",
-                }}>
-                    {/* Corner brackets */}
-                    <span style={{ position: "absolute", top: -1, left: -1, color: isHovered ? C.ready : C.whiteLow, fontSize: "10px", lineHeight: 1 }}>┌</span>
-                    <span style={{ position: "absolute", top: -1, right: -1, color: isHovered ? C.ready : C.whiteLow, fontSize: "10px", lineHeight: 1 }}>┐</span>
-                    <span style={{ position: "absolute", bottom: -1, left: -1, color: isHovered ? C.ready : C.whiteLow, fontSize: "10px", lineHeight: 1 }}>└</span>
-                    <span style={{ position: "absolute", bottom: -1, right: -1, color: isHovered ? C.ready : C.whiteLow, fontSize: "10px", lineHeight: 1 }}>┘</span>
-
-                    <p style={{
-                        margin: 0, fontSize: "12px", fontFamily: "monospace",
-                        color: isHovered ? C.white : C.whiteHi,
-                        letterSpacing: "0.04em", textTransform: "uppercase",
-                        textAlign: "center",
-                    }}>
-                        {step.label}
-                    </p>
-                </div>
-            </div>
-
-            {/* Connector line to next node */}
-            {!isLast && (
-                <div style={{
-                    width: "1px", height: "28px",
-                    background: `linear-gradient(to bottom, ${C.whiteGhost}, ${C.whiteLow})`,
-                    marginTop: "0px",
-                }} />
-            )}
-        </div>
-    )
+const MOCK_WORKFLOW = {
+    nodes: [
+        { id: "1", position: { x: 250, y: 0 }, data: { label: "User Landing" } },
+        { id: "2", position: { x: 250, y: 100 }, data: { label: "Input System Idea" } },
+        { id: "3", position: { x: 250, y: 200 }, data: { label: "Generate Blueprint" } },
+        { id: "4", position: { x: 250, y: 300 }, data: { label: "Review Roadmap" } },
+        { id: "5", position: { x: 250, y: 400 }, data: { label: "Export Code" } }
+    ],
+    edges: [
+        { id: "e1-2", source: "1", target: "2" },
+        { id: "e2-3", source: "2", target: "3" },
+        { id: "e3-4", source: "3", target: "4" },
+        { id: "e4-5", source: "4", target: "5" }
+    ]
 }
 
 // ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
 export default function WorkflowMap({ productDetails }) {
-    const [steps, setSteps] = useState([])
+    const [nodes, setNodes, onNodesChange] = useNodesState([])
+    const [edges, setEdges, onEdgesChange] = useEdgesState([])
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState("")
     const [isMock, setIsMock] = useState(false)
-    const [hovered, setHovered] = useState(null)
     const { getCurrentContext, setWorkflow, workflow } = useProjectStore()
     const ctx = getCurrentContext()
     const hasRun = useRef(false)
 
-    // Convert API nodes format to flat steps list
-    const parseSteps = (data) => {
-        if (data.nodes) {
-            // Sort by y-position to determine order
-            const sorted = [...data.nodes].sort((a, b) => (a.position?.y || 0) - (b.position?.y || 0))
-            return sorted.map(n => ({ id: n.id, label: n.data?.label || n.id }))
-        }
-        if (Array.isArray(data)) return data
-        return []
+    const applyWorkflowData = (data) => {
+        const cleanNodes = (data.nodes || []).map((n, i) => ({
+            ...n,
+            style: {
+                background: "rgba(8,25,90,0.85)",
+                color: C.whiteHi,
+                border: `1px solid ${C.cardBorder}`,
+                fontFamily: "monospace",
+                fontSize: "12px",
+                width: 180,
+                textAlign: "center",
+                padding: "8px 12px",
+                backdropFilter: "blur(6px)",
+                borderRadius: "2px",
+            },
+            data: { label: `${String(i + 1).padStart(2, "0")} — ${n.data?.label || n.id}` }
+        }))
+        setNodes(cleanNodes)
+        setEdges((data.edges || []).map(e => ({ ...e, animated: true, stroke: C.accentMid })))
     }
 
     const handleGenerate = async (bust = false) => {
@@ -144,7 +77,7 @@ export default function WorkflowMap({ productDetails }) {
         setIsMock(false)
 
         if (!bust && workflow) {
-            setSteps(parseSteps(workflow))
+            applyWorkflowData(workflow)
             setIsLoading(false)
             return
         }
@@ -160,10 +93,10 @@ export default function WorkflowMap({ productDetails }) {
             
             const data = await res.json()
             setWorkflow(data)
-            setSteps(parseSteps(data))
+            applyWorkflowData(data)
         } catch (err) {
             console.error("Workflow generation failed:", err)
-            setSteps(MOCK_STEPS)
+            applyWorkflowData(MOCK_WORKFLOW)
             setIsMock(true)
             setError("Failed to generate workflow. Falling back to simulated journey.")
         } finally {
@@ -211,35 +144,33 @@ export default function WorkflowMap({ productDetails }) {
             </div>
 
             {/* Flow Diagram */}
-            {isLoading && steps.length === 0 ? (
+            {isLoading && nodes.length === 0 ? (
                 <div style={{ padding: "60px 0", textAlign: "center", color: C.accentMid }}>
                     <p style={{ letterSpacing: "0.2em" }}>&gt; PLOTTING USER JOURNEY...</p>
                 </div>
             ) : (
-                <div style={{
-                    display: "flex", flexDirection: "column", alignItems: "center",
-                    padding: "20px 0",
-                }}>
-                    {steps.map((step, i) => (
-                        <StepNode
-                            key={step.id}
-                            step={step}
-                            index={i}
-                            total={steps.length}
-                            isHovered={hovered === step.id}
-                            onHover={setHovered}
-                        />
-                    ))}
+                <div style={{ height: "450px", border: `1px solid ${C.cardBorder}`, background: "rgba(8,25,90,0.4)", position: "relative" }}>
+                    <ReactFlow
+                        nodes={nodes}
+                        edges={edges}
+                        onNodesChange={onNodesChange}
+                        onEdgesChange={onEdgesChange}
+                        fitView
+                        style={{ background: "transparent" }}
+                    >
+                        <Background color="rgba(255,255,255,0.05)" gap={20} />
+                        <Controls />
+                    </ReactFlow>
                 </div>
             )}
 
             {/* Step count annotation */}
-            {steps.length > 0 && (
+            {nodes.length > 0 && (
                 <p style={{
                     fontSize: "9px", color: C.whiteGhost, textAlign: "right",
                     margin: "8px 0 0", letterSpacing: "0.1em",
                 }}>
-                    {`TOTAL_STEPS: ${steps.length} // SEQUENTIAL_FLOW`}
+                    {`TOTAL_STEPS: ${nodes.length} // USER_JOURNEY_NODES`}
                 </p>
             )}
 

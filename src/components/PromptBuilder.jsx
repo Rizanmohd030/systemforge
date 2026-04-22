@@ -22,22 +22,22 @@ const C = {
 // ─── MOCK DATA ────────────────────────────────────────────────────────────────
 const MOCK_PROMPTS = [
     {
-        phaseName: "Phase 1: Project & Database Scaffold",
-        targetAi: "Cursor Composer",
-        pasteInstructions: "Open a new Composer chat (Cmd+I) and paste this to build the foundation.",
-        promptText: "You are a Senior Next.js Developer.\n\n@Context: Setup the base repository for a visual app planner called SystemForge.\n@Tech_Stack: Next.js (App Router), Supabase, Tailwind CSS.\n@Initial_Instructions: Scaffold the initial folder structure, setup Tailwind, and write the initial Supabase SQL schema for a generic 'users' and 'projects' table."
+        title: "Phase 1: Project & Database Scaffold",
+        aiTarget: "Cursor Composer",
+        instructions: "Open a new Composer chat (Cmd+I) and paste this to build the foundation.",
+        prompt: "You are a Senior Next.js Developer.\n\n@Context: Setup the base repository for a visual app planner called SystemForge.\n@Tech_Stack: Next.js (App Router), Supabase, Tailwind CSS.\n@Initial_Instructions: Scaffold the initial folder structure, setup Tailwind, and write the initial Supabase SQL schema for a generic 'users' and 'projects' table."
     },
     {
-        phaseName: "Phase 2: Core Workflows",
-        targetAi: "Claude 3.5 Sonnet / ChatGPT 4o",
-        pasteInstructions: "Use a reasoning model for complex logical planning before diving into code.",
-        promptText: "You are a Technical Product Manager.\n\n@Context: We need to define the exact sequence of events for taking a raw user text idea and turning it into a generated UI blueprint.\n@Architecture_Rules: The process must happen strictly asynchronously via Next.js API Routes.\n@Initial_Instructions: Outline the exact 5-step API chain needed for this functionality."
+        title: "Phase 2: Core Workflows",
+        aiTarget: "Claude 3.5 Sonnet / ChatGPT 4o",
+        instructions: "Use a reasoning model for complex logical planning before diving into code.",
+        prompt: "You are a Technical Product Manager.\n\n@Context: We need to define the exact sequence of events for taking a raw user text idea and turning it into a generated UI blueprint.\n@Architecture_Rules: The process must happen strictly asynchronously via Next.js API Routes.\n@Initial_Instructions: Outline the exact 5-step API chain needed for this functionality."
     },
     {
-        phaseName: "Phase 3: Frontend UI Implementation",
-        targetAi: "Cursor Composer",
-        pasteInstructions: "Paste this into Composer to generate the visual React components.",
-        promptText: "You are an Expert Frontend Engineer.\n\n@Context: Build the main Dashboard for SystemForge.\n@Tech_Stack: ReactFlow for node diagrams, Tailwind for styling.\n@Initial_Instructions: Create a highly stylized dark-mode Dashboard layout with a sidebar and a central node editor canvas."
+        title: "Phase 3: Frontend UI Implementation",
+        aiTarget: "Cursor Composer",
+        instructions: "Paste this into Composer to generate the visual React components.",
+        prompt: "You are an Expert Frontend Engineer.\n\n@Context: Build the main Dashboard for SystemForge.\n@Tech_Stack: ReactFlow for node diagrams, Tailwind for styling.\n@Initial_Instructions: Create a highly stylized dark-mode Dashboard layout with a sidebar and a central node editor canvas."
     }
 ]
 

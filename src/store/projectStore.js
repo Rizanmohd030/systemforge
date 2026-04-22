@@ -68,10 +68,13 @@ export const useProjectStore = create(
             // Full Context Getter
             getCurrentContext: () => {
                 const state = get()
-                if (state.refinement) {
-                    return { type: "refined", data: state.refinement }
+                return {
+                    type: state.refinement ? "refined" : "raw",
+                    idea: state.idea,
+                    refinement: state.refinement,
+                    stack: state.stack,
+                    architecture: state.architecture
                 }
-                return { type: "raw", data: state.idea || "" }
             },
 
             // Global Validation Trigger

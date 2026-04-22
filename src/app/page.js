@@ -91,9 +91,7 @@ export default function Home() {
       e.preventDefault()
       const value = inputRef.current?.value?.trim()
       if (!value || isSubmitting) return
-      console.log("🔥 [Home] Saving idea to Zustand store:", value)
       setStoreIdea(value)
-      console.log("✅ [Home] Idea saved")
       setIsSubmitting(true)
       setTimeout(() => router.push("/blueprint"), 1200)
       return

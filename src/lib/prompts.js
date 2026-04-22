@@ -9,29 +9,38 @@ function getContextSummary(context) {
     if (!context) return "No prior context."
     let summary = []
 
-    if (context.idea && !context.refinement) {
-        summary.push(`Raw Concept Idea: ${context.idea}`)
+    // Unwrap context { type, data } if needed
+    let data = context
+    if (context.type && context.data !== undefined) {
+        data = context.data
+        // Raw context is just a string
+        if (context.type === "raw" && typeof data === "string") {
+            return `Raw Concept Idea: ${data}`
+        }
     }
 
-    if (context.refinement) {
-        const r = context.refinement
-        summary.push(`[Product Context]`)
-        summary.push(`Name: ${r.productName}`)
-        summary.push(`Description: ${r.description}`)
-        if (r.targetUsers?.length) summary.push(`Target Users: ${r.targetUsers.join(", ")}`)
-        if (r.coreFeatures?.length) summary.push(`Core Features: ${r.coreFeatures.join(", ")}`)
+    // Handle refined/structured context
+    if (data && typeof data === "object") {
+        if (data.productName) {
+            // This is refined product context
+            summary.push(`[Product Context]`)
+            summary.push(`Name: ${data.productName}`)
+            summary.push(`Description: ${data.description}`)
+            if (data.targetUsers?.length) summary.push(`Target Users: ${data.targetUsers.join(", ")}`)
+            if (data.coreFeatures?.length) summary.push(`Core Features: ${data.coreFeatures.join(", ")}`)
+        }
+
+        // Handle tech stack context
+        if (data.frontend || data.backend || data.infrastructure) {
+            summary.push(`\n[Technical Stack]`)
+            if (data.frontend) summary.push(`Frontend: ${data.frontend.name} - ${data.frontend.reason}`)
+            if (data.backend) summary.push(`Backend: ${data.backend.name} - ${data.backend.reason}`)
+            if (data.infrastructure) summary.push(`Infrastructure: ${data.infrastructure.name} - ${data.infrastructure.reason}`)
+            if (data.styling) summary.push(`Styling: ${data.styling.name}`)
+        }
     }
 
-    if (context.stack) {
-        const s = context.stack
-        summary.push(`\n[Technical Stack]`)
-        if (s.frontend) summary.push(`Frontend: ${s.frontend.name} - ${s.frontend.reason}`)
-        if (s.backend) summary.push(`Backend: ${s.backend.name} - ${s.backend.reason}`)
-        if (s.infrastructure) summary.push(`Infrastructure: ${s.infrastructure.name} - ${s.infrastructure.reason}`)
-        if (s.styling) summary.push(`Styling: ${s.styling.name}`)
-    }
-
-    return summary.join("\n")
+    return summary.length ? summary.join("\n") : "No prior context."
 }
 
 // ─── Refinement Prompt ───────────────────────────────────────────

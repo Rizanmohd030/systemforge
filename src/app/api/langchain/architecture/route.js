@@ -37,7 +37,7 @@ const parser = StructuredOutputParser.fromZodSchema(architectureSchema)
 
 export async function POST(request) {
     try {
-        const { context } = await request.json()
+        const { context, feedback } = await request.json()
 
         const model = new ChatGoogleGenerativeAI({
             model: "gemini-2.5-flash",
@@ -45,7 +45,13 @@ export async function POST(request) {
             temperature: 0,
         })
 
-        const templateStr = buildArchitecturePrompt(context)
+        let templateStr = buildArchitecturePrompt(context)
+        
+        // Append feedback to prompt if provided
+        if (feedback && feedback.trim()) {
+            templateStr += `\n\nUser Feedback: ${feedback}\n\nIncorporate this feedback into your architectural recommendations.`
+        }
+
         const template = new PromptTemplate({
             template: templateStr,
             inputVariables: [],

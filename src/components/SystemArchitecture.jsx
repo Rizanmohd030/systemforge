@@ -59,6 +59,7 @@ export default function SystemArchitecture({ productDetails }) {
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState("")
     const [isMock, setIsMock] = useState(false)
+    const [feedback, setFeedback] = useState("")
     const { getCurrentContext, setArchitecture, architecture: globalArch } = useProjectStore()
     const ctx = getCurrentContext()
     const hasRun = useRef(false)
@@ -86,12 +87,12 @@ export default function SystemArchitecture({ productDetails }) {
         setEdges((data.architecture?.edges || []).map(e => ({ ...e, animated: true, stroke: C.accentMid })))
     }
 
-    const handleGenerate = async (bust = false) => {
+    const handleGenerate = async (bust = false, feedbackText = "") => {
         setIsLoading(true)
         setError("")
         setIsMock(false)
 
-        if (!bust && globalArch) {
+        if (!bust && globalArch && !feedbackText) {
             applyArchData(globalArch)
             setIsLoading(false)
             return
@@ -101,7 +102,7 @@ export default function SystemArchitecture({ productDetails }) {
             const res = await fetch("/api/langchain/architecture", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ context: ctx }),
+                body: JSON.stringify({ context: ctx, feedback: feedbackText }),
             })
             
             if (!res.ok) throw new Error("Failed to fetch architecture")
@@ -220,6 +221,55 @@ export default function SystemArchitecture({ productDetails }) {
                         {error}
                     </div>
                 )}
+            </div>
+
+            {/* FEEDBACK SECTION */}
+            <div style={{ border: `1px solid ${C.cardBorder}`, background: C.cardBg, padding: "20px" }}>
+                <p style={{ fontSize: "10px", color: C.whiteLow, marginBottom: "12px", letterSpacing: "0.1em", margin: "0 0 12px 0" }}>
+                    {"// ARCHITECTURE FEEDBACK"}
+                </p>
+                <div style={{ display: "flex", gap: "12px", flexDirection: "column" }}>
+                    <textarea
+                        value={feedback}
+                        onChange={(e) => setFeedback(e.target.value)}
+                        placeholder="Request specific architectural changes (e.g., 'Add a caching layer', 'Use GraphQL instead of REST'..."
+                        style={{
+                            width: "100%",
+                            minHeight: "80px",
+                            padding: "12px",
+                            background: "rgba(0,0,0,0.4)",
+                            border: `1px solid ${C.whiteLow}`,
+                            color: C.white,
+                            fontFamily: "monospace",
+                            fontSize: "12px",
+                            resize: "vertical",
+                            outline: "none",
+                        }}
+                    />
+                    <button
+                        onClick={() => {
+                            if (feedback.trim()) {
+                                handleGenerate(true, feedback)
+                                setFeedback("")
+                            }
+                        }}
+                        disabled={isLoading || !feedback.trim()}
+                        style={{
+                            alignSelf: "flex-end",
+                            background: feedback.trim() ? "rgba(20,60,160,0.6)" : "rgba(20,60,160,0.2)",
+                            border: `1px solid ${feedback.trim() ? C.whiteLow : C.whiteGhost}`,
+                            color: C.white,
+                            padding: "8px 16px",
+                            fontSize: "10px",
+                            cursor: feedback.trim() && !isLoading ? "pointer" : "not-allowed",
+                            fontFamily: "monospace",
+                            letterSpacing: "0.05em",
+                            opacity: feedback.trim() ? 1 : 0.5,
+                        }}
+                    >
+                        {isLoading ? "[ REGENERATING... ]" : "[ APPLY FEEDBACK ]"}
+                    </button>
+                </div>
             </div>
 
         </section>
