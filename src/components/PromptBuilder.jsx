@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import { useProjectStore } from "@/store/projectStore"
+import WorkspaceLayout from "@/components/WorkspaceLayout"
 
 // ─── COLORS (blueprint palette) ───────────────────────────────────────────────
 const C = {
@@ -108,7 +109,12 @@ export default function PromptBuilder({ productDetails }) {
     }
 
     return (
-        <section style={{ display: "flex", flexDirection: "column", gap: "24px", fontFamily: "monospace", color: C.whiteHi }}>
+        <WorkspaceLayout 
+            moduleCode="06" 
+            moduleLabel="PROMPT BUILDER"
+            description="Synthesizes your blueprint into master prompts for AI IDEs"
+        >
+        <section style={{ display: "flex", flexDirection: "column", gap: "30px", fontFamily: "monospace", color: C.whiteHi, padding: "40px 60px", margin: "0" }}>
             
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
                 <div>
@@ -142,7 +148,7 @@ export default function PromptBuilder({ productDetails }) {
                     <p style={{ letterSpacing: "0.2em", animation: "pulse 1.5s infinite" }}>&gt; SYNTHESIZING ARCHITECTURAL PHASES...</p>
                 </div>
             ) : (
-                <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: "25px" }}>
                     {prompts.map((phase, index) => {
                         const isExpanded = expandedPhase === index;
                         return (
@@ -154,7 +160,7 @@ export default function PromptBuilder({ productDetails }) {
                                 {/* Header Toggle */}
                                 <div 
                                     onClick={() => setExpandedPhase(isExpanded ? null : index)}
-                                    style={{ padding: "16px 20px", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center" }}
+                                    style={{ padding: "24px 28px", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center" }}
                                 >
                                     <div>
                                         <p style={{ fontSize: "10px", color: isExpanded ? C.ready : C.whiteLow, margin: "0 0 4px 0", letterSpacing: "0.1em" }}>PHASE 0{index + 1}</p>
@@ -167,7 +173,7 @@ export default function PromptBuilder({ productDetails }) {
 
                                 {/* Body */}
                                 {isExpanded && (
-                                    <div style={{ padding: "0 20px 20px 20px", borderTop: `1px solid ${C.whiteGhost}` }}>
+                                    <div style={{ padding: "0 28px 28px 28px", borderTop: `1px solid ${C.whiteGhost}` }}>
                                         
                                         {/* Guide Text */}
                                         <div style={{ display: "flex", gap: "16px", marginTop: "16px", marginBottom: "16px" }}>
@@ -225,5 +231,6 @@ export default function PromptBuilder({ productDetails }) {
                 }
             `}</style>
         </section>
+        </WorkspaceLayout>
     )
 }

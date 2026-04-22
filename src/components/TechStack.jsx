@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import { useProjectStore } from "@/store/projectStore"
+import WorkspaceLayout from "@/components/WorkspaceLayout"
 
 // ─── COLORS (blueprint palette) ───────────────────────────────────────────────
 const C = {
@@ -106,7 +107,12 @@ export default function TechStack({ productDetails }) {
     }
 
     return (
-        <section style={{ fontFamily: "monospace", color: C.whiteHi }}>
+        <WorkspaceLayout 
+            moduleCode="03" 
+            moduleLabel="TECH STACK"
+            description="Recommends the ideal stack based on your requirements"
+        >
+        <section style={{ fontFamily: "monospace", color: C.whiteHi, padding: "60px 80px", maxWidth: "1200px", margin: "0 auto" }}>
 
             {isLoading ? (
                 <div style={{ padding: "40px 0", textAlign: "center", color: C.accentMid }}>
@@ -122,7 +128,7 @@ export default function TechStack({ productDetails }) {
                     </p>
 
                     {/* STACK CARDS */}
-                    <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "30px" }}>
                         {analysis.recommendations?.map((rec, idx) => (
                             <div key={idx} style={{
                                 background: rec.isPrimary ? "rgba(20,60,160,0.25)" : "rgba(255,255,255,0.03)",
@@ -223,5 +229,6 @@ export default function TechStack({ productDetails }) {
                 }
             `}</style>
         </section>
+        </WorkspaceLayout>
     )
 }

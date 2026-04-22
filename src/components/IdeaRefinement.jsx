@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import { useProjectStore } from "@/store/projectStore"
+import WorkspaceLayout from "@/components/WorkspaceLayout"
 
 // ─── COLORS (blueprint palette) ───────────────────────────────────────────────
 const C = {
@@ -147,16 +148,17 @@ export default function IdeaRefinement({ rawIdea: propRawIdea }) {
     }
 
     return (
-        <section style={{
-            fontFamily: "monospace",
-            color: C.whiteHi,
-            background: C.darkBg,
-            minHeight: "100vh",
-            padding: "40px 60px",
-            display: "flex",
-            flexDirection: "column",
-            gap: "40px",
-        }}>
+        
+            <section style={{
+                fontFamily: "monospace",
+                color: C.whiteHi,
+                padding: "60px 80px",
+                display: "flex",
+                flexDirection: "column",
+                gap: "60px",
+                position: "relative",
+                zIndex: 5,
+            }}>
             {/* ─── LOADING STATE ─────────────────────────────────────────────────── */}
             {isLoading && !refined ? (
                 <div style={{ textAlign: "center", paddingTop: "100px" }}>
@@ -173,140 +175,129 @@ export default function IdeaRefinement({ rawIdea: propRawIdea }) {
                 </div>
             ) : refined ? (
                 <>
-                    {/* ────── HEADER ────────────────────────────────────────────────── */}
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "40px" }}>
-                        <div style={{ flex: 1 }}>
-                            <p style={{ fontSize: "12px", color: C.whiteLow, letterSpacing: "0.15em", marginBottom: "8px" }}>
-                                REFINED CONCEPT
-                            </p>
-                            <h1 style={{ fontSize: "48px", color: C.white, margin: "0 0 20px 0", fontWeight: "700" }}>
-                                {refined.productName}
-                            </h1>
-                            <p style={{ fontSize: "16px", color: C.whiteMid, lineHeight: "1.7", maxWidth: "600px" }}>
-                                {refined.description}
-                            </p>
-                        </div>
-                        <div style={{ display: "flex", gap: "12px", flexDirection: "column" }}>
-                            <button
-                                onClick={() => handleRefine("", 0)}
-                                disabled={isLoading}
-                                style={{
-                                    background: "rgba(120,180,255,0.2)",
-                                    border: `1px solid ${C.accent}`,
-                                    color: C.accent,
-                                    padding: "12px 16px",
-                                    fontSize: "12px",
-                                    cursor: "pointer",
-                                    fontFamily: "monospace",
-                                    letterSpacing: "0.05em",
-                                    display: "flex",
-                                    alignItems: "center",
-                                    gap: "8px",
-                                    transition: "all 0.2s",
-                                }}
-                                onMouseEnter={e => e.currentTarget.style.background = "rgba(120,180,255,0.35)"}
-                                onMouseLeave={e => e.currentTarget.style.background = "rgba(120,180,255,0.2)"}
-                                title="Generate a new product name"
-                            >
-                                🔄 REFRESH NAME
-                            </button>
-                            <button
-                                onClick={handleSave}
-                                disabled={isSaved || isLoading}
-                                style={{
-                                    background: isSaved ? "rgba(100,220,255,0.15)" : "rgba(100,220,255,0.35)",
-                                    border: `1px solid ${isSaved ? C.ready : C.accent}`,
-                                    color: isSaved ? C.ready : C.white,
-                                    padding: "12px 16px",
-                                    fontSize: "12px",
-                                    cursor: isSaved ? "default" : "pointer",
-                                    fontFamily: "monospace",
-                                    letterSpacing: "0.05em",
-                                    transition: "all 0.2s",
-                                }}
-                            >
-                                {isSaved ? "✓ SAVED" : "[ SAVE CONCEPT ]"}
-                            </button>
-                        </div>
-                    </div>
+                    {/* ────── TOP ROW: 2 CARDS ────────────────────────────────────────── */}
+                    <div style={{
+                        display: "flex",
+                        alignItems: "stretch",
+                        justifyContent: "center",
+                        gap: "40px",
+                        width: "100%",
+                    }}>
 
-                    {/* ────── TWO COLUMN LAYOUT ─────────────────────────────────────── */}
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "60px" }}>
-                        
-                        {/* LEFT: TARGET USERS & FEATURES */}
-                        <div style={{ display: "flex", flexDirection: "column", gap: "40px" }}>
-                            
-                            {/* TARGET USERS */}
-                            <div>
-                                <p style={{ fontSize: "11px", color: C.whiteLow, letterSpacing: "0.15em", marginBottom: "16px", textTransform: "uppercase" }}>
-                                    Who uses this
+                        {/* CARD 1: PRODUCT NAME WITH REFRESH ICON */}
+                        <div style={{
+                            flex: "0 0 550px",
+                            background: "rgba(255,255,255,0.015)",
+                            border: `1px solid ${C.cardBorder}`,
+                            padding: "32px 28px",
+                            borderRadius: "8px",
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: "16px",
+                            position: "relative",
+                            zIndex: 10,
+                            backdropFilter: "blur(4px)",
+                            height: "200px",
+                        }}>
+                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "40px" }}>
+                                <p style={{ fontSize: "11px", color: C.ready, letterSpacing: "0.15em", textTransform: "uppercase", margin: 0, fontWeight: "600" }}>
+                                    📌 PRODUCT NAME
                                 </p>
-                                <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-                                    {refined.targetUsers?.map((user, i) => (
-                                        <div key={i} style={{
-                                            borderLeft: `3px solid ${C.accent}`,
-                                            paddingLeft: "20px",
-                                            paddingTop: "8px",
-                                            paddingBottom: "8px",
-                                        }}>
-                                            <p style={{ fontSize: "16px", color: C.white, margin: 0, fontWeight: "500" }}>{user}</p>
-                                        </div>
-                                    ))}
-                                </div>
+                                <button
+                                    onClick={() => handleRefine("", 0)}
+                                    disabled={isLoading}
+                                    style={{
+                                        background: "transparent",
+                                        border: "none",
+                                        color: C.accent,
+                                        padding: "4px 8px",
+                                        fontSize: "16px",
+                                        cursor: isLoading ? "wait" : "pointer",
+                                        transition: "all 0.3s",
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                    }}
+                                    onMouseEnter={e => e.currentTarget.style.transform = "rotate(180deg)"}
+                                    onMouseLeave={e => e.currentTarget.style.transform = "rotate(0deg)"}
+                                    title="Refresh concept"
+                                >
+                                    🔄
+                                </button>
                             </div>
-
-                            {/* CORE FEATURES */}
                             <div>
-                                <p style={{ fontSize: "11px", color: C.whiteLow, letterSpacing: "0.15em", marginBottom: "16px", textTransform: "uppercase" }}>
-                                    Core features
+                                <h2 style={{ fontSize: "24px", color: C.white, margin: "0 0 12px 0", fontWeight: "700", letterSpacing: "0.02em" }}>
+                                    {refined.productName}
+                                </h2>
+                                <p style={{ fontSize: "13px", color: C.whiteMid, lineHeight: "1.6", margin: 0 }}>
+                                    {refined.description}
                                 </p>
-                                <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-                                    {refined.coreFeatures?.map((feature, i) => (
-                                        <div key={i} style={{
-                                            borderLeft: `3px solid ${C.ready}`,
-                                            paddingLeft: "20px",
-                                            paddingTop: "8px",
-                                            paddingBottom: "8px",
-                                        }}>
-                                            <p style={{ fontSize: "16px", color: C.white, margin: 0, fontWeight: "500" }}>{feature}</p>
-                                        </div>
-                                    ))}
-                                </div>
                             </div>
                         </div>
 
-                        {/* RIGHT: STRATEGIC PATHS */}
-                        <div>
-                            <p style={{ fontSize: "11px", color: C.whiteLow, letterSpacing: "0.15em", marginBottom: "24px", textTransform: "uppercase" }}>
-                                Strategic approaches
-                            </p>
-                            <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-                                {refined.architectAdvice?.map((advice, i) => (
-                                    <div
-                                        key={i}
-                                        onClick={() => setFeedback(`Focus on ${advice.path}. ${advice.impact}`)}
-                                        style={{
-                                            background: "rgba(8,25,90,0.7)",
-                                            border: `2px solid ${C.accentMid}`,
-                                            padding: "24px",
-                                            cursor: "pointer",
-                                            transition: "all 0.3s",
-                                            borderRadius: "4px",
-                                        }}
-                                        onMouseEnter={e => {
-                                            e.currentTarget.style.background = "rgba(20,60,160,0.5)"
-                                            e.currentTarget.style.borderColor = C.ready
-                                        }}
-                                        onMouseLeave={e => {
-                                            e.currentTarget.style.background = "rgba(8,25,90,0.7)"
-                                            e.currentTarget.style.borderColor = C.accentMid
-                                        }}
+                        {/* CARD 2: STRATEGIC APPROACHES + SAVE */}
+                        <div style={{
+                            flex: "0 0 320px",
+                            background: "rgba(255,255,255,0.015)",
+                            border: `1px solid ${C.cardBorder}`,
+                            padding: "32px 28px",
+                            borderRadius: "8px",
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: "16px",
+                            position: "relative",
+                            zIndex: 10,
+                            backdropFilter: "blur(4px)",
+                        }}>
+                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px" }}>
+                                <p style={{ fontSize: "11px", color: C.ready, letterSpacing: "0.15em", textTransform: "uppercase", margin: 0, fontWeight: "600" }}>
+                                    🎯 APPROACHES
+                                </p>
+                                <button
+                                    onClick={handleSave}
+                                    disabled={isSaved || isLoading}
+                                    style={{
+                                        background: isSaved ? "rgba(100,220,255,0.15)" : "rgba(100,220,255,0.35)",
+                                        border: `1px solid ${isSaved ? C.ready : C.accent}`,
+                                        color: isSaved ? C.ready : C.white,
+                                        padding: "6px 12px",
+                                        fontSize: "9px",
+                                        cursor: isSaved ? "default" : "pointer",
+                                        fontFamily: "monospace",
+                                        letterSpacing: "0.05em",
+                                        transition: "all 0.2s",
+                                        borderRadius: "4px",
+                                        whiteSpace: "nowrap",
+                                    }}
+                                >
+                                    {isSaved ? "✓ SAVED" : "[ SAVE ]"}
+                                </button>
+                            </div>
+                            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                                {refined.architectAdvice?.slice(0, 2).map((advice, i) => (
+                                    <div key={i} onClick={() => setFeedback(`Focus on ${advice.path}. ${advice.impact}`)} style={{
+                                        background: "rgba(255,255,255,0.015)",
+                                        border: `1px solid ${C.accentMid}`,
+                                        padding: "12px",
+                                        cursor: "pointer",
+                                        transition: "all 0.2s",
+                                        borderRadius: "4px",
+                                        backdropFilter: "blur(4px)",
+                                    }}
+                                    onMouseEnter={e => {
+                                        e.currentTarget.style.borderColor = C.ready
+                                        e.currentTarget.style.background = "rgba(20,60,160,0.3)"
+                                    }}
+                                    onMouseLeave={e => {
+                                        e.currentTarget.style.borderColor = C.accentMid
+                                        e.currentTarget.style.background = "transparent"
+                                    }}
                                     >
-                                        <p style={{ fontSize: "14px", color: C.ready, marginBottom: "12px", fontWeight: "bold", letterSpacing: "0.05em" }}>
+                                        <p style={{ fontSize: "10px", color: C.ready, margin: "0 0 4px 0", fontWeight: "bold", letterSpacing: "0.05em" }}>
                                             {advice.path}
                                         </p>
-                                        <p style={{ fontSize: "13px", color: C.whiteMid, lineHeight: "1.6", margin: 0 }}>
-                                            {advice.impact}
+                                        <p style={{ fontSize: "10px", color: C.whiteMid, margin: 0, lineHeight: "1.4" }}>
+                                            {advice.impact.substring(0, 60)}
                                         </p>
                                     </div>
                                 ))}
@@ -314,28 +305,109 @@ export default function IdeaRefinement({ rawIdea: propRawIdea }) {
                         </div>
                     </div>
 
-                    {/* ────── FEEDBACK SECTION ──────────────────────────────────────── */}
-                    <div style={{ marginTop: "20px" }}>
-                        <p style={{ fontSize: "11px", color: C.whiteLow, letterSpacing: "0.15em", marginBottom: "20px", textTransform: "uppercase" }}>
-                            Refine further
+                    {/* ────── MIDDLE ROW: FEATURES & USERS ────────────────────────────── */}
+                    <div style={{
+                        display: "flex",
+                        alignItems: "stretch",
+                        justifyContent: "center",
+                        gap: "40px",
+                        width: "100%",
+                    }}>
+                        {/* CARD 3: CORE FEATURES */}
+                        <div style={{
+                            flex: "0 0 380px",
+                            background: "rgba(255,255,255,0.015)",
+                            border: `1px solid ${C.cardBorder}`,
+                            padding: "28px 24px",
+                            borderRadius: "8px",
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: "14px",
+                            position: "relative",
+                            zIndex: 10,
+                            backdropFilter: "blur(4px)",
+                        }}>
+                            <p style={{ fontSize: "11px", color: C.ready, letterSpacing: "0.15em", textTransform: "uppercase", margin: 0, fontWeight: "600" }}>
+                                ⚙️ CORE FEATURES
+                            </p>
+                            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                                {refined.coreFeatures?.map((feature, i) => (
+                                    <div key={i} style={{
+                                        borderLeft: `2px solid ${C.ready}`,
+                                        paddingLeft: "14px",
+                                        fontSize: "12px",
+                                        color: C.whiteMid,
+                                    }}>
+                                        • {feature}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* CARD 4: TARGET USERS */}
+                        <div style={{
+                            flex: "0 0 380px",
+                            background: "rgba(255,255,255,0.015)",
+                            border: `1px solid ${C.cardBorder}`,
+                            padding: "28px 24px",
+                            borderRadius: "8px",
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: "14px",
+                            position: "relative",
+                            zIndex: 10,
+                            backdropFilter: "blur(4px)",
+                        }}>
+                            <p style={{ fontSize: "11px", color: C.ready, letterSpacing: "0.15em", textTransform: "uppercase", margin: 0, fontWeight: "600" }}>
+                                👥 TARGET USERS
+                            </p>
+                            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                                {refined.targetUsers?.map((user, i) => (
+                                    <div key={i} style={{
+                                        borderLeft: `2px solid ${C.accent}`,
+                                        paddingLeft: "14px",
+                                        fontSize: "12px",
+                                        color: C.whiteMid,
+                                    }}>
+                                        → {user}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* ────── BOTTOM: REFINEMENT CARD ────────────────────────────────── */}
+                    <div style={{
+                        background: "rgba(255,255,255,0.015)",
+                        border: `1px solid ${C.cardBorder}`,
+                        padding: "32px 28px",
+                        borderRadius: "8px",
+                        width: "100%",
+                        position: "relative",
+                        zIndex: 10,
+                        backdropFilter: "blur(4px)",
+                    }}>
+                        <p style={{ fontSize: "11px", color: C.ready, letterSpacing: "0.15em", textTransform: "uppercase", margin: "0 0 18px 0", fontWeight: "600" }}>
+                            ✏️ REGENERATE
                         </p>
-                        <div style={{ display: "flex", gap: "12px" }}>
+                        <div style={{ display: "flex", gap: "14px" }}>
                             <input
                                 type="text"
                                 value={feedback}
                                 onChange={e => setFeedback(e.target.value)}
                                 onKeyDown={e => e.key === "Enter" && handleFeedbackSubmit()}
-                                placeholder="e.g., Focus only on B2B, remove consumer features..."
+                                placeholder="Focus on B2B, remove features, etc..."
                                 style={{
                                     flex: 1,
                                     background: "rgba(255,255,255,0.04)",
                                     border: `1px solid ${feedback.trim() ? C.accent : C.cardBorder}`,
                                     color: C.white,
-                                    padding: "14px 16px",
+                                    padding: "12px 16px",
                                     fontFamily: "monospace",
-                                    fontSize: "13px",
+                                    fontSize: "12px",
                                     outline: "none",
                                     transition: "all 0.2s",
+                                    borderRadius: "4px",
                                 }}
                             />
                             <button
@@ -345,13 +417,14 @@ export default function IdeaRefinement({ rawIdea: propRawIdea }) {
                                     border: `1px solid ${feedback.trim() ? C.accent : C.cardBorder}`,
                                     background: feedback.trim() ? "rgba(120,180,255,0.25)" : "transparent",
                                     color: feedback.trim() ? C.white : C.whiteLow,
-                                    padding: "14px 24px",
+                                    padding: "12px 24px",
                                     fontFamily: "monospace",
-                                    fontSize: "13px",
+                                    fontSize: "11px",
                                     cursor: feedback.trim() ? "pointer" : "default",
                                     transition: "all 0.2s",
                                     whiteSpace: "nowrap",
                                     letterSpacing: "0.05em",
+                                    borderRadius: "4px",
                                 }}
                             >
                                 [ REGENERATE ]
@@ -359,17 +432,9 @@ export default function IdeaRefinement({ rawIdea: propRawIdea }) {
                         </div>
                     </div>
 
-                    {/* ────── STATUS & ERROR ────────────────────────────────────────── */}
-                    {isMock && (
-                        <p style={{ color: C.warn, fontSize: "11px", marginTop: "20px", letterSpacing: "0.05em" }}>
-                            ⚠ Using simulated data. Upgrade your plan or try again later.
-                        </p>
-                    )}
-                    {error && (
-                        <p style={{ color: C.error, fontSize: "11px", marginTop: "20px", letterSpacing: "0.05em" }}>
-                            ✕ {error}
-                        </p>
-                    )}
+                    {/* STATUS */}
+                    {isMock && <p style={{ color: C.warn, fontSize: "10px", letterSpacing: "0.05em", marginTop: "0px" }}>⚠ SIMULATED DATA</p>}
+                    {error && <p style={{ color: C.error, fontSize: "10px", letterSpacing: "0.05em", marginTop: "0px" }}>✕ {error}</p>}
                 </>
             ) : null}
 
@@ -379,6 +444,7 @@ export default function IdeaRefinement({ rawIdea: propRawIdea }) {
                     50% { opacity: 1; }
                 }
             `}</style>
-        </section>
+            </section>
+        
     )
 }

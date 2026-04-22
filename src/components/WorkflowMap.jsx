@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import { useProjectStore } from "@/store/projectStore"
+import WorkspaceLayout from "@/components/WorkspaceLayout"
 
 import ReactFlow, { Background, Controls, useNodesState, useEdgesState } from "reactflow"
 import "reactflow/dist/style.css"
@@ -112,17 +113,26 @@ export default function WorkflowMap({ productDetails }) {
     }, [ctx])
 
     return (
+        <WorkspaceLayout 
+            moduleCode="02" 
+            moduleLabel="WORKFLOW MAP"
+            description="Generates step-by-step user flows and interaction diagrams"
+        >
         <section style={{
             border: `1px solid ${C.cardBorder}`,
             background: "rgba(8,25,90,0.4)",
-            padding: "24px",
+            padding: "50px",
             fontFamily: "monospace",
             position: "relative",
+            maxWidth: "none",
+            margin: "0"
         }}>
             {/* Header */}
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
                 <div>
-                    <p style={{ fontSize: "10px", color: C.whiteLow, margin: 0, letterSpacing: "0.1em" }}>// WORKFLOW ENGINE</p>
+                    <p style={{ fontSize: "10px", color: C.whiteLow, margin: 0, letterSpacing: "0.1em" }}>
+                        {`// WORKFLOW ENGINE`}
+                    </p>
                     <h3 style={{ fontSize: "14px", color: C.white, margin: "4px 0 0" }}>
                         USER JOURNEY MAP {ctx.type === "refined" && <span style={{ color: C.ready }}>[REFINED ✓]</span>}
                     </h3>
@@ -180,5 +190,6 @@ export default function WorkflowMap({ productDetails }) {
                 </div>
             )}
         </section>
+        </WorkspaceLayout>
     )
 }

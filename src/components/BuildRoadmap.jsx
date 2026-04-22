@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import { useProjectStore } from "@/store/projectStore"
+import WorkspaceLayout from "@/components/WorkspaceLayout"
 
 // ─── COLORS (blueprint palette) ───────────────────────────────────────────────
 const C = {
@@ -111,7 +112,12 @@ export default function BuildRoadmap({ productDetails }) {
     }
 
     return (
-        <section style={{ display: "flex", flexDirection: "column", gap: "24px", fontFamily: "monospace", color: C.whiteHi }}>
+        <WorkspaceLayout 
+            moduleCode="05" 
+            moduleLabel="BUILD ROADMAP"
+            description="Generates an actionable, step-by-step development roadmap"
+        >
+        <section style={{ display: "flex", flexDirection: "column", gap: "30px", fontFamily: "monospace", color: C.whiteHi, padding: "40px 60px", margin: "0" }}>
             
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <div>
@@ -144,7 +150,7 @@ export default function BuildRoadmap({ productDetails }) {
                     <p style={{ letterSpacing: "0.2em" }}>&gt; PLOTTING COURSE...</p>
                 </div>
             ) : (
-                <div style={{ display: "flex", flexDirection: "column", gap: "12px", position: "relative" }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: "30px", position: "relative" }}>
                     {/* Vertical line connecting nodes */}
                     <div style={{ position: "absolute", left: "20px", top: "20px", bottom: "20px", width: "1px", background: C.whiteGhost, zIndex: 0 }} />
                     
@@ -168,7 +174,7 @@ export default function BuildRoadmap({ productDetails }) {
                                     {/* Header (always visible) */}
                                     <div 
                                         onClick={() => setExpandedStage(isExpanded ? null : index)}
-                                        style={{ padding: "16px 20px", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center" }}
+                                        style={{ padding: "24px 28px", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center" }}
                                     >
                                         <div>
                                             <p style={{ fontSize: "10px", color: isExpanded ? C.ready : C.whiteLow, margin: "0 0 4px 0", letterSpacing: "0.1em" }}>STEP 0{index + 1}</p>
@@ -181,7 +187,7 @@ export default function BuildRoadmap({ productDetails }) {
 
                                     {/* Content (collapsible) */}
                                     {isExpanded && (
-                                        <div style={{ padding: "0 20px 20px 20px", borderTop: `1px solid ${C.whiteGhost}` }}>
+                                        <div style={{ padding: "0 28px 28px 28px", borderTop: `1px solid ${C.whiteGhost}` }}>
                                             <p style={{ fontSize: "12px", color: C.whiteMid, margin: "16px 0", lineHeight: "1.5" }}>{stage.description}</p>
                                             
                                             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px" }}>
@@ -244,5 +250,6 @@ export default function BuildRoadmap({ productDetails }) {
                 </div>
             )}
         </section>
+        </WorkspaceLayout>
     )
 }

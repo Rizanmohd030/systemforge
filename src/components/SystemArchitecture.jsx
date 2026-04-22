@@ -10,6 +10,7 @@ import ReactFlow, {
 } from "reactflow"
 import "reactflow/dist/style.css"
 import { useProjectStore } from "@/store/projectStore"
+import WorkspaceLayout from "@/components/WorkspaceLayout"
 
 // ─── COLORS (blueprint palette) ───────────────────────────────────────────────
 const C = {
@@ -130,10 +131,15 @@ export default function SystemArchitecture({ productDetails }) {
     }, [ctx])
 
     return (
-        <section style={{ display: "flex", flexDirection: "column", gap: "24px", fontFamily: "monospace", color: C.whiteHi }}>
+        <WorkspaceLayout 
+            moduleCode="04" 
+            moduleLabel="SYSTEM ARCHITECTURE"
+            description="Generates your PRD and architectural system diagram"
+        >
+        <section style={{ display: "flex", flexDirection: "column", gap: "24px", fontFamily: "monospace", color: C.whiteHi, padding: "40px 60px", margin: "0" }}>
             
             {/* PRD SECTION */}
-            <div style={{ border: `1px solid ${C.cardBorder}`, background: C.cardBg, padding: "24px" }}>
+            <div style={{ border: `1px solid ${C.cardBorder}`, background: C.cardBg, padding: "40px" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
                     <div>
                         <p style={{ fontSize: "10px", color: C.accent, letterSpacing: "0.1em", margin: 0 }}>{"// PRODUCT REQUIREMENT DOCUMENT"}</p>
@@ -147,7 +153,7 @@ export default function SystemArchitecture({ productDetails }) {
                         <p style={{ letterSpacing: "0.2em" }}>&gt; DRAFTING REQUIREMENTS...</p>
                     </div>
                 ) : prd ? (
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "20px" }}>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "28px" }}>
                         <div>
                             <h4 style={{ fontSize: "11px", color: C.whiteLow, marginBottom: "8px" }}>PROBLEM STATEMENT</h4>
                             <p style={{ fontSize: "14px", lineHeight: "1.5", margin: 0, color: C.whiteHi }}>{prd.problemStatement}</p>
@@ -273,5 +279,6 @@ export default function SystemArchitecture({ productDetails }) {
             </div>
 
         </section>
+        </WorkspaceLayout>
     )
 }
