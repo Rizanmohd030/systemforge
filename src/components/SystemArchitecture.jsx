@@ -131,11 +131,6 @@ export default function SystemArchitecture({ productDetails }) {
     }, [ctx])
 
     return (
-        <WorkspaceLayout 
-            moduleCode="04" 
-            moduleLabel="SYSTEM ARCHITECTURE"
-            description="Generates your PRD and architectural system diagram"
-        >
         <section style={{ display: "flex", flexDirection: "column", gap: "24px", fontFamily: "monospace", color: C.whiteHi, padding: "40px 60px", margin: "0" }}>
             
             {/* PRD SECTION */}
@@ -279,6 +274,5 @@ export default function SystemArchitecture({ productDetails }) {
             </div>
 
         </section>
-        </WorkspaceLayout>
     )
 }

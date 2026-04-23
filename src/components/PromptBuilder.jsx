@@ -109,11 +109,6 @@ export default function PromptBuilder({ productDetails }) {
     }
 
     return (
-        <WorkspaceLayout 
-            moduleCode="06" 
-            moduleLabel="PROMPT BUILDER"
-            description="Synthesizes your blueprint into master prompts for AI IDEs"
-        >
         <section style={{ display: "flex", flexDirection: "column", gap: "30px", fontFamily: "monospace", color: C.whiteHi, padding: "40px 60px", margin: "0" }}>
             
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
@@ -231,6 +226,5 @@ export default function PromptBuilder({ productDetails }) {
                 }
             `}</style>
         </section>
-        </WorkspaceLayout>
     )
 }

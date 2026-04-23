@@ -107,12 +107,7 @@ export default function TechStack({ productDetails }) {
     }
 
     return (
-        <WorkspaceLayout 
-            moduleCode="03" 
-            moduleLabel="TECH STACK"
-            description="Recommends the ideal stack based on your requirements"
-        >
-        <section style={{ fontFamily: "monospace", color: C.whiteHi, padding: "60px 80px", maxWidth: "1200px", margin: "0 auto" }}>
+        <section style={{ fontFamily: "monospace", color: C.whiteHi, padding: "40px 60px", margin: "0", display: "flex", flexDirection: "column", gap: "30px" }}>
 
             {isLoading ? (
                 <div style={{ padding: "40px 0", textAlign: "center", color: C.accentMid }}>
@@ -127,8 +122,8 @@ export default function TechStack({ productDetails }) {
                         &gt; {analysis.summaryMotive}
                     </p>
 
-                    {/* STACK CARDS */}
-                    <div style={{ display: "flex", flexDirection: "column", gap: "30px" }}>
+                    {/* STACK CARDS - 2 COLUMN GRID */}
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "30px" }}>
                         {analysis.recommendations?.map((rec, idx) => (
                             <div key={idx} style={{
                                 background: rec.isPrimary ? "rgba(20,60,160,0.25)" : "rgba(255,255,255,0.03)",
@@ -229,6 +224,5 @@ export default function TechStack({ productDetails }) {
                 }
             `}</style>
         </section>
-        </WorkspaceLayout>
     )
 }

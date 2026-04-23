@@ -113,18 +113,13 @@ export default function WorkflowMap({ productDetails }) {
     }, [ctx])
 
     return (
-        <WorkspaceLayout 
-            moduleCode="02" 
-            moduleLabel="WORKFLOW MAP"
-            description="Generates step-by-step user flows and interaction diagrams"
-        >
         <section style={{
-            border: `1px solid ${C.cardBorder}`,
-            background: "rgba(8,25,90,0.4)",
-            padding: "50px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "30px",
             fontFamily: "monospace",
-            position: "relative",
-            maxWidth: "none",
+            color: C.whiteHi,
+            padding: "40px 60px",
             margin: "0"
         }}>
             {/* Header */}
@@ -190,6 +185,5 @@ export default function WorkflowMap({ productDetails }) {
                 </div>
             )}
         </section>
-        </WorkspaceLayout>
     )
 }

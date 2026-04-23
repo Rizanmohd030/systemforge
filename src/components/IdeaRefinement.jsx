@@ -197,7 +197,7 @@ export default function IdeaRefinement({ rawIdea: propRawIdea }) {
                             position: "relative",
                             zIndex: 10,
                             backdropFilter: "blur(4px)",
-                            height: "200px",
+                            height: "240px",
                         }}>
                             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "40px" }}>
                                 <p style={{ fontSize: "11px", color: C.ready, letterSpacing: "0.15em", textTransform: "uppercase", margin: 0, fontWeight: "600" }}>

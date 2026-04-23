@@ -112,11 +112,6 @@ export default function BuildRoadmap({ productDetails }) {
     }
 
     return (
-        <WorkspaceLayout 
-            moduleCode="05" 
-            moduleLabel="BUILD ROADMAP"
-            description="Generates an actionable, step-by-step development roadmap"
-        >
         <section style={{ display: "flex", flexDirection: "column", gap: "30px", fontFamily: "monospace", color: C.whiteHi, padding: "40px 60px", margin: "0" }}>
             
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -150,106 +145,189 @@ export default function BuildRoadmap({ productDetails }) {
                     <p style={{ letterSpacing: "0.2em" }}>&gt; PLOTTING COURSE...</p>
                 </div>
             ) : (
-                <div style={{ display: "flex", flexDirection: "column", gap: "30px", position: "relative" }}>
-                    {/* Vertical line connecting nodes */}
-                    <div style={{ position: "absolute", left: "20px", top: "20px", bottom: "20px", width: "1px", background: C.whiteGhost, zIndex: 0 }} />
-                    
-                    {roadmap.map((stage, index) => {
-                        const isExpanded = expandedStage === index;
-                        return (
-                            <div key={index} style={{ position: "relative", zIndex: 1, paddingLeft: "50px" }}>
-                                {/* Node dot */}
-                                <div style={{
-                                    position: "absolute", left: "16px", top: "16px", width: "9px", height: "9px", borderRadius: "50%",
-                                    background: isExpanded ? C.ready : C.cardBg, border: `2px solid ${isExpanded ? C.ready : C.whiteLow}`,
-                                    boxShadow: isExpanded ? `0 0 10px ${C.ready}80` : "none", transition: "all 0.2s ease", cursor: "pointer"
-                                }} onClick={() => setExpandedStage(isExpanded ? null : index)} />
+                <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+                    {/* HORIZONTAL STEPS VIEW */}
+                    <div style={{ 
+                        display: "flex", 
+                        alignItems: "center", 
+                        gap: "0px", 
+                        justifyContent: "flex-start",
+                        padding: "40px 20px",
+                        background: "rgba(8,25,90,0.3)",
+                        border: `1px solid ${C.cardBorder}`,
+                        borderRadius: "4px",
+                        minHeight: "200px",
+                        position: "relative",
+                        overflowX: "auto",
+                        overflowY: "hidden"
+                    }}>
+                        {roadmap.map((stage, index) => {
+                            const isSelected = expandedStage === index;
+                            return (
+                                <div key={index} style={{ display: "flex", flexDirection: "column", alignItems: "center", position: "relative", zIndex: isSelected ? 10 : 1, flexShrink: 0, minWidth: "160px" }}>
+                                    {/* Arrow connector before step */}
+                                    {index > 0 && (
+                                        <div style={{
+                                            position: "absolute",
+                                            right: "100%",
+                                            top: "50%",
+                                            width: "40px",
+                                            height: "2px",
+                                            background: isSelected || expandedStage === index - 1 ? C.ready : C.cardBorder,
+                                            transition: "all 0.3s ease",
+                                            marginRight: "0px"
+                                        }}>
+                                            <div style={{
+                                                position: "absolute",
+                                                left: "-8px",
+                                                top: "-5px",
+                                                width: "0",
+                                                height: "0",
+                                                borderRight: `8px solid ${isSelected || expandedStage === index - 1 ? C.ready : C.cardBorder}`,
+                                                borderTop: "5px solid transparent",
+                                                borderBottom: "5px solid transparent"
+                                            }} />
+                                        </div>
+                                    )}
 
-                                {/* Card */}
-                                <div style={{
-                                    border: `1px solid ${isExpanded ? C.ready : C.cardBorder}`,
-                                    background: isExpanded ? "rgba(20,60,160,0.25)" : C.cardBg,
-                                    transition: "all 0.2s ease"
-                                }}>
-                                    {/* Header (always visible) */}
-                                    <div 
-                                        onClick={() => setExpandedStage(isExpanded ? null : index)}
-                                        style={{ padding: "24px 28px", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center" }}
+                                    {/* Step Card */}
+                                    <div
+                                        onClick={() => setExpandedStage(isSelected ? null : index)}
+                                        style={{
+                                            background: isSelected ? "rgba(20,60,160,0.4)" : "rgba(255,255,255,0.015)",
+                                            border: `2px solid ${isSelected ? C.ready : C.cardBorder}`,
+                                            padding: "16px 20px",
+                                            borderRadius: "4px",
+                                            cursor: "pointer",
+                                            textAlign: "center",
+                                            minWidth: "140px",
+                                            transition: "all 0.3s ease",
+                                            filter: expandedStage !== null && !isSelected ? "blur(2px)" : "none",
+                                            opacity: expandedStage !== null && !isSelected ? 0.4 : 1,
+                                            backdropFilter: "blur(4px)",
+                                            transform: isSelected ? "scale(1.05)" : "scale(1)"
+                                        }}
                                     >
-                                        <div>
-                                            <p style={{ fontSize: "10px", color: isExpanded ? C.ready : C.whiteLow, margin: "0 0 4px 0", letterSpacing: "0.1em" }}>STEP 0{index + 1}</p>
-                                            <h4 style={{ fontSize: "15px", color: C.white, margin: 0 }}>{stage.stage}</h4>
-                                        </div>
-                                        <div style={{ color: C.whiteLow, transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s ease" }}>
-                                            ▼
-                                        </div>
+                                        <p style={{ fontSize: "9px", color: isSelected ? C.ready : C.whiteLow, margin: "0 0 4px 0", letterSpacing: "0.1em", fontWeight: "600" }}>
+                                            STEP {String(index + 1).padStart(2, "0")}
+                                        </p>
+                                        <h4 style={{ fontSize: "12px", color: C.white, margin: "0", fontWeight: "700" }}>
+                                            {stage.stage}
+                                        </h4>
                                     </div>
+                                </div>
+                            );
+                        })}
+                    </div>
 
-                                    {/* Content (collapsible) */}
-                                    {isExpanded && (
-                                        <div style={{ padding: "0 28px 28px 28px", borderTop: `1px solid ${C.whiteGhost}` }}>
-                                            <p style={{ fontSize: "12px", color: C.whiteMid, margin: "16px 0", lineHeight: "1.5" }}>{stage.description}</p>
-                                            
-                                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px" }}>
-                                                {/* Left Column: Tasks */}
-                                                <div>
-                                                    <h5 style={{ fontSize: "10px", color: C.accent, letterSpacing: "0.1em", marginBottom: "12px" }}>{"// TASKS"}</h5>
-                                                    <ul style={{ padding: 0, margin: 0, listStyle: "none" }}>
-                                                        {(stage.tasks || []).map((t, i) => (
-                                                            <li key={i} style={{ display: "flex", gap: "8px", alignItems: "flex-start", marginBottom: "8px", fontSize: "11px", color: C.whiteHi }}>
-                                                                <span style={{ color: C.whiteLow }}>[ ]</span>
-                                                                <span>{t}</span>
-                                                            </li>
-                                                        ))}
-                                                    </ul>
-                                                </div>
+                    {/* EXPANDED DETAILS */}
+                    {expandedStage !== null && roadmap[expandedStage] && (
+                        <div style={{
+                            border: `1px solid ${C.ready}`,
+                            background: "rgba(20,60,160,0.2)",
+                            padding: "28px",
+                            borderRadius: "4px",
+                            backdropFilter: "blur(4px)",
+                            animation: "fadeIn 0.3s ease"
+                        }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "16px" }}>
+                                <div>
+                                    <p style={{ fontSize: "10px", color: C.ready, margin: "0 0 4px 0", letterSpacing: "0.1em", fontWeight: "600" }}>
+                                        STEP {String(expandedStage + 1).padStart(2, "0")}
+                                    </p>
+                                    <h3 style={{ fontSize: "16px", color: C.white, margin: "0", fontWeight: "700" }}>
+                                        {roadmap[expandedStage].stage}
+                                    </h3>
+                                </div>
+                                <button
+                                    onClick={() => setExpandedStage(null)}
+                                    style={{
+                                        background: "transparent",
+                                        border: "none",
+                                        color: C.whiteLow,
+                                        fontSize: "18px",
+                                        cursor: "pointer",
+                                        padding: "0"
+                                    }}
+                                >
+                                    ✕
+                                </button>
+                            </div>
 
-                                                {/* Right Column: Terminal & AI */}
-                                                <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-                                                    {stage.commands && stage.commands.length > 0 && (
-                                                        <div>
-                                                            <h5 style={{ fontSize: "10px", color: C.ready, letterSpacing: "0.1em", marginBottom: "8px" }}>&gt; TERMINAL COMMANDS</h5>
-                                                            <div style={{ background: "rgba(0,0,0,0.5)", border: `1px solid ${C.whiteGhost}`, padding: "12px", borderRadius: "4px" }}>
-                                                                {(stage.commands || []).map((c, i) => (
-                                                                    <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: i < stage.commands.length - 1 ? "8px" : "0" }}>
-                                                                        <code style={{ fontSize: "11px", color: C.ready, wordBreak: "break-all" }}>{c}</code>
-                                                                        <button 
-                                                                            onClick={(e) => { e.stopPropagation(); copyToClipboard(c, `cmd-${index}-${i}`); }}
-                                                                            style={{ background: "none", border: "none", color: C.whiteLow, cursor: "pointer", fontSize: "10px", padding: "4px" }}
-                                                                        >
-                                                                            {copiedContent === `cmd-${index}-${i}` ? "COPIED!" : "COPY"}
-                                                                        </button>
-                                                                    </div>
-                                                                ))}
-                                                            </div>
-                                                        </div>
-                                                    )}
+                            <p style={{ fontSize: "13px", color: C.whiteMid, margin: "0 0 20px 0", lineHeight: "1.6" }}>
+                                {roadmap[expandedStage].description}
+                            </p>
 
-                                                    {stage.aiPrompt && (
-                                                        <div>
-                                                            <h5 style={{ fontSize: "10px", color: "#b684ff", letterSpacing: "0.1em", marginBottom: "8px" }}>✨ AI PROMPT</h5>
-                                                            <div style={{ background: "rgba(182,132,255,0.1)", border: "1px solid rgba(182,132,255,0.3)", padding: "12px", borderRadius: "4px" }}>
-                                                                <p style={{ fontSize: "11px", color: C.whiteMid, margin: "0 0 10px 0", fontStyle: "italic" }}>&quot;{stage.aiPrompt}&quot;</p>
-                                                                <button 
-                                                                    onClick={(e) => { e.stopPropagation(); copyToClipboard(stage.aiPrompt, `prompt-${index}`); }}
-                                                                    style={{ background: "rgba(182,132,255,0.2)", border: "1px solid rgba(182,132,255,0.5)", color: "#b684ff", cursor: "pointer", fontSize: "10px", padding: "4px 8px", width: "100%" }}
-                                                                >
-                                                                    {copiedContent === `prompt-${index}` ? "PROMPT COPIED!" : "COPY PROMPT FOR IDE"}
-                                                                </button>
-                                                            </div>
-                                                        </div>
-                                                    )}
-                                                </div>
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px" }}>
+                                {/* Tasks */}
+                                <div>
+                                    <h5 style={{ fontSize: "10px", color: C.accent, letterSpacing: "0.1em", marginBottom: "12px", fontWeight: "600" }}>
+                                        // TASKS
+                                    </h5>
+                                    <ul style={{ padding: "0", margin: "0", listStyle: "none" }}>
+                                        {(roadmap[expandedStage].tasks || []).map((t, i) => (
+                                            <li key={i} style={{ display: "flex", gap: "8px", alignItems: "flex-start", marginBottom: "8px", fontSize: "11px", color: C.whiteHi }}>
+                                                <span style={{ color: C.ready, marginTop: "2px" }}>✓</span>
+                                                <span>{t}</span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+
+                                {/* Commands & AI */}
+                                <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                                    {roadmap[expandedStage].commands && roadmap[expandedStage].commands.length > 0 && (
+                                        <div>
+                                            <h5 style={{ fontSize: "10px", color: C.ready, letterSpacing: "0.1em", marginBottom: "8px", fontWeight: "600" }}>
+                                                &gt; TERMINAL COMMANDS
+                                            </h5>
+                                            <div style={{ background: "rgba(0,0,0,0.5)", border: `1px solid ${C.whiteGhost}`, padding: "12px", borderRadius: "4px" }}>
+                                                {(roadmap[expandedStage].commands || []).map((c, i) => (
+                                                    <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: i < roadmap[expandedStage].commands.length - 1 ? "8px" : "0" }}>
+                                                        <code style={{ fontSize: "10px", color: C.ready, wordBreak: "break-all" }}>{c}</code>
+                                                        <button
+                                                            onClick={(e) => { e.stopPropagation(); copyToClipboard(c, `cmd-${expandedStage}-${i}`); }}
+                                                            style={{ background: "none", border: "none", color: C.whiteLow, cursor: "pointer", fontSize: "9px", padding: "4px 8px" }}
+                                                        >
+                                                            {copiedContent === `cmd-${expandedStage}-${i}` ? "✓" : "COPY"}
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {roadmap[expandedStage].aiPrompt && (
+                                        <div>
+                                            <h5 style={{ fontSize: "10px", color: "#b684ff", letterSpacing: "0.1em", marginBottom: "8px", fontWeight: "600" }}>
+                                                ✨ AI PROMPT
+                                            </h5>
+                                            <div style={{ background: "rgba(182,132,255,0.1)", border: "1px solid rgba(182,132,255,0.3)", padding: "12px", borderRadius: "4px" }}>
+                                                <p style={{ fontSize: "11px", color: C.whiteMid, margin: "0 0 8px 0", fontStyle: "italic" }}>
+                                                    &quot;{roadmap[expandedStage].aiPrompt}&quot;
+                                                </p>
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); copyToClipboard(roadmap[expandedStage].aiPrompt, `prompt-${expandedStage}`); }}
+                                                    style={{ background: "rgba(182,132,255,0.2)", border: "1px solid rgba(182,132,255,0.5)", color: "#b684ff", cursor: "pointer", fontSize: "9px", padding: "4px 8px", width: "100%", fontFamily: "monospace" }}
+                                                >
+                                                    {copiedContent === `prompt-${expandedStage}` ? "✓ COPIED" : "COPY PROMPT"}
+                                                </button>
                                             </div>
                                         </div>
                                     )}
                                 </div>
                             </div>
-                        )
-                    })}
+                        </div>
+                    )}
+
+                    <style>{`
+                        @keyframes fadeIn {
+                            from { opacity: 0; transform: translateY(-10px); }
+                            to { opacity: 1; transform: translateY(0); }
+                        }
+                    `}</style>
                 </div>
             )}
         </section>
-        </WorkspaceLayout>
     )
 }
