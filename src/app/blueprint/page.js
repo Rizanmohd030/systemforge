@@ -81,11 +81,9 @@ export default function BlueprintPage() {
   const { idea, refinement, setIdea, isProcessing, validationWarnings } = useProjectStore()
   const isRefined = !!refinement
   const [activeModule, setActiveModule] = useState(null)
-  const [mounted, setMounted] = useState(false)
 
   // Ensure idea is loaded from localStorage on mount
   useEffect(() => {
-    setMounted(true)
     // Check if idea is missing and try to load from storage
     if (!idea && typeof window !== "undefined") {
       // Try new Zustand storage location first
@@ -113,9 +111,6 @@ export default function BlueprintPage() {
       }
     }
   }, [idea, setIdea])
-
-  // Don't render until hydrated
-  if (!mounted) return <div style={{ background: "#000" }} />
 
   return (
     <main className={`blueprint-bg min-h-screen relative overflow-hidden ${nothingFont.className}`} style={{ color: C.whiteHi }}>
@@ -233,7 +228,7 @@ export default function BlueprintPage() {
           validationWarnings={validationWarnings}
         />
       ) : (
-        <div style={{ maxWidth: "860px", margin: "0 auto", padding: "80px 60px 80px 80px", position: "relative", zIndex: 10 }}>
+        <div style={{ width: "100%", padding: "40px 40px 40px 40px", position: "relative", zIndex: 10 }}>
           <ModulePanel
             module={MODULES.find(m => m.id === activeModule)}
             idea={idea}
@@ -287,7 +282,7 @@ function HubDiagram({ modules, onSelect, isProcessing, validationWarnings }) {
     const t = setTimeout(computeLines, 150)
     window.addEventListener("resize", computeLines)
     return () => { clearTimeout(t); window.removeEventListener("resize", computeLines) }
-  }, [])
+  }, [computeLines])
 
   return (
     <div ref={containerRef} style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
@@ -469,7 +464,7 @@ function ExplodedCard({ mod, style, isHovered, onHover, onClick, refCallback }) 
               fontSize: "9px", color: "rgba(255,255,255,0.30)", letterSpacing: "0.15em",
               fontFamily: "monospace",
             }}>
-              // MODULE {mod.code}
+              {`// MODULE ${mod.code}`}
             </span>
             <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
               <span style={{
@@ -541,14 +536,9 @@ function ExplodedCard({ mod, style, isHovered, onHover, onClick, refCallback }) 
   )
 }
 function Hub2D({ isProcessing, hasWarnings }) {
-  const [mounted, setMounted] = useState(false)
-  useEffect(() => { setMounted(true) }, [])
-
   const size = 280;
   const cx = size / 2, cy = size / 2;
   const toRad = d => (d - 90) * Math.PI / 180;
-
-  if (!mounted) return <div style={{ width: size, height: size }} />
 
   // ── Helper: generate arc segment paths ──
   const makeSegments = (count, rOuter, rInner, gapDeg = 2, insetDeg = 0) =>
@@ -921,7 +911,7 @@ function ModulePanel({ module, idea, onBack }) {
         &larr; BACK TO MODULES
       </button>
       <p style={{ fontSize: "11px", color: C.whiteLow, marginBottom: "20px", letterSpacing: "0.08em" }}>
-        // {module.code} — {module.label}
+        {`// ${module.code} — ${module.label}`}
       </p>
       {module.id === "refinement" && idea && <IdeaRefinement rawIdea={idea} />}
       {module.id === "workflow" && <WorkflowMap productDetails={idea} />}

@@ -30,7 +30,8 @@ export default function Home() {
   const [currentLine, setCurrentLine] = useState("")
   const [bootIndex, setBootIndex] = useState(0)
   const [charIndex, setCharIndex] = useState(0)
-  const [bootComplete, setBootComplete] = useState(false)
+  
+  const bootComplete = bootIndex >= BOOT_LINES.length && bootIndex > 0
 
   // ── Input state ───────────────────────────────────────────────────────────
   const [idea, setIdea] = useState("")
@@ -46,7 +47,6 @@ export default function Home() {
   // ── BOOT ANIMATION ────────────────────────────────────────────────────────
   useEffect(() => {
     if (bootIndex >= BOOT_LINES.length) {
-      setBootComplete(true)
       return
     }
     const line = BOOT_LINES[bootIndex]
@@ -65,7 +65,7 @@ export default function Home() {
       }, 180)
       return () => clearTimeout(t)
     }
-  }, [charIndex, bootIndex])
+  }, [charIndex, bootIndex, currentLine])
 
 
   // ── AUTO-FOCUS after boot ─────────────────────────────────────────────────
@@ -254,7 +254,7 @@ function GuidancePanel({ onSelect }) {
       {/* Product description */}
       <div>
         <p style={{ opacity: 0.7, fontSize: "10px", marginBottom: "6px", letterSpacing: "0.08em" }}>
-          // ABOUT
+          {`// ABOUT`}
         </p>
         <p style={{ lineHeight: "1.6", opacity: 0.9 }}>
           SystemForge converts your idea into a complete system blueprint — architecture, tech stack, and a build guide.
@@ -267,7 +267,7 @@ function GuidancePanel({ onSelect }) {
       {/* Prompt guidance */}
       <div>
         <p style={{ opacity: 0.75, fontSize: "10px", marginBottom: "8px", letterSpacing: "0.08em" }}>
-          // DESCRIBE YOUR SYSTEM CLEARLY
+          {`// DESCRIBE YOUR SYSTEM CLEARLY`}
         </p>
         <p style={{ opacity: 0.85, marginBottom: "6px" }}>Good prompts include:</p>
         <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "4px", opacity: 0.8 }}>
@@ -283,7 +283,7 @@ function GuidancePanel({ onSelect }) {
       {/* Example buttons */}
       <div>
         <p style={{ opacity: 0.75, fontSize: "10px", marginBottom: "8px", letterSpacing: "0.08em" }}>
-          // QUICK EXAMPLES
+          {`// QUICK EXAMPLES`}
         </p>
         <div style={{ display: "flex", flexDirection: "column", gap: "7px" }}>
           {EXAMPLES.map(ex => (

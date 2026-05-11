@@ -73,7 +73,7 @@ export default function IdeaRefinement({ rawIdea: propRawIdea }) {
         if (rawIdea && !globalRefinement) {
             handleRefine()
         }
-    }, [])
+    }, [globalRefinement, rawIdea])
 
     const handleRefine = async (feedbackText = "", retries = 0) => {
         setIsLoading(true)

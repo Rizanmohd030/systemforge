@@ -113,7 +113,6 @@ export default function BuildRoadmap({ productDetails }) {
 
     return (
         <section style={{ display: "flex", flexDirection: "column", gap: "30px", fontFamily: "monospace", color: C.whiteHi, padding: "40px 60px", margin: "0" }}>
-            
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <div>
                     <p style={{ fontSize: "10px", color: C.accent, letterSpacing: "0.1em", margin: 0 }}>{"// EXECUTION PLAN"}</p>
@@ -146,75 +145,55 @@ export default function BuildRoadmap({ productDetails }) {
                 </div>
             ) : (
                 <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-                    {/* HORIZONTAL STEPS VIEW */}
+                    {/* MASONRY GRID VIEW */}
                     <div style={{ 
-                        display: "flex", 
-                        alignItems: "center", 
-                        gap: "0px", 
-                        justifyContent: "flex-start",
-                        padding: "40px 20px",
+                        display: "flex",
+                        gap: "16px",
+                        padding: "20px",
                         background: "rgba(8,25,90,0.3)",
                         border: `1px solid ${C.cardBorder}`,
                         borderRadius: "4px",
-                        minHeight: "200px",
-                        position: "relative",
+                        minHeight: "120px",
+                        width: "100%",
                         overflowX: "auto",
-                        overflowY: "hidden"
+                        overflowY: "hidden",
+                        scrollBehavior: "smooth"
                     }}>
                         {roadmap.map((stage, index) => {
                             const isSelected = expandedStage === index;
                             return (
-                                <div key={index} style={{ display: "flex", flexDirection: "column", alignItems: "center", position: "relative", zIndex: isSelected ? 10 : 1, flexShrink: 0, minWidth: "160px" }}>
-                                    {/* Arrow connector before step */}
-                                    {index > 0 && (
-                                        <div style={{
-                                            position: "absolute",
-                                            right: "100%",
-                                            top: "50%",
-                                            width: "40px",
-                                            height: "2px",
-                                            background: isSelected || expandedStage === index - 1 ? C.ready : C.cardBorder,
-                                            transition: "all 0.3s ease",
-                                            marginRight: "0px"
-                                        }}>
-                                            <div style={{
-                                                position: "absolute",
-                                                left: "-8px",
-                                                top: "-5px",
-                                                width: "0",
-                                                height: "0",
-                                                borderRight: `8px solid ${isSelected || expandedStage === index - 1 ? C.ready : C.cardBorder}`,
-                                                borderTop: "5px solid transparent",
-                                                borderBottom: "5px solid transparent"
-                                            }} />
-                                        </div>
-                                    )}
-
-                                    {/* Step Card */}
-                                    <div
-                                        onClick={() => setExpandedStage(isSelected ? null : index)}
-                                        style={{
-                                            background: isSelected ? "rgba(20,60,160,0.4)" : "rgba(255,255,255,0.015)",
-                                            border: `2px solid ${isSelected ? C.ready : C.cardBorder}`,
-                                            padding: "16px 20px",
-                                            borderRadius: "4px",
-                                            cursor: "pointer",
-                                            textAlign: "center",
-                                            minWidth: "140px",
-                                            transition: "all 0.3s ease",
-                                            filter: expandedStage !== null && !isSelected ? "blur(2px)" : "none",
-                                            opacity: expandedStage !== null && !isSelected ? 0.4 : 1,
-                                            backdropFilter: "blur(4px)",
-                                            transform: isSelected ? "scale(1.05)" : "scale(1)"
-                                        }}
-                                    >
-                                        <p style={{ fontSize: "9px", color: isSelected ? C.ready : C.whiteLow, margin: "0 0 4px 0", letterSpacing: "0.1em", fontWeight: "600" }}>
-                                            STEP {String(index + 1).padStart(2, "0")}
-                                        </p>
-                                        <h4 style={{ fontSize: "12px", color: C.white, margin: "0", fontWeight: "700" }}>
-                                            {stage.stage}
-                                        </h4>
-                                    </div>
+                                <div
+                                    key={index}
+                                    onClick={() => setExpandedStage(isSelected ? null : index)}
+                                    style={{
+                                        background: isSelected ? "rgba(20,60,160,0.4)" : "rgba(255,255,255,0.015)",
+                                        border: `2px solid ${isSelected ? C.ready : C.cardBorder}`,
+                                        padding: "16px 20px",
+                                        borderRadius: "4px",
+                                        cursor: "pointer",
+                                        textAlign: "center",
+                                        transition: "all 0.3s ease",
+                                        filter: expandedStage !== null && !isSelected ? "blur(1px)" : "none",
+                                        opacity: expandedStage !== null && !isSelected ? 0.5 : 1,
+                                        backdropFilter: "blur(4px)",
+                                        transform: isSelected ? "scale(1.05)" : "scale(1)",
+                                        display: "flex",
+                                        flexDirection: "column",
+                                        justifyContent: "center",
+                                        alignItems: "center",
+                                        zIndex: isSelected ? 10 : 1,
+                                        minWidth: "140px",
+                                        whiteSpace: "nowrap",
+                                        overflow: "hidden",
+                                        textOverflow: "ellipsis"
+                                    }}
+                                >
+                                    <p style={{ fontSize: "8px", color: isSelected ? C.ready : C.whiteLow, margin: "0 0 4px 0", letterSpacing: "0.05em", fontWeight: "600" }}>
+                                        STEP {String(index + 1).padStart(2, "0")}
+                                    </p>
+                                    <h4 style={{ fontSize: "11px", color: C.white, margin: "0", fontWeight: "600", lineHeight: "1.3", overflow: "hidden", textOverflow: "ellipsis" }}>
+                                        {stage.stage}
+                                    </h4>
                                 </div>
                             );
                         })}
@@ -225,17 +204,17 @@ export default function BuildRoadmap({ productDetails }) {
                         <div style={{
                             border: `1px solid ${C.ready}`,
                             background: "rgba(20,60,160,0.2)",
-                            padding: "28px",
+                            padding: "16px",
                             borderRadius: "4px",
                             backdropFilter: "blur(4px)",
                             animation: "fadeIn 0.3s ease"
                         }}>
-                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "16px" }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "12px" }}>
                                 <div>
-                                    <p style={{ fontSize: "10px", color: C.ready, margin: "0 0 4px 0", letterSpacing: "0.1em", fontWeight: "600" }}>
+                                    <p style={{ fontSize: "9px", color: C.ready, margin: "0 0 2px 0", letterSpacing: "0.1em", fontWeight: "600" }}>
                                         STEP {String(expandedStage + 1).padStart(2, "0")}
                                     </p>
-                                    <h3 style={{ fontSize: "16px", color: C.white, margin: "0", fontWeight: "700" }}>
+                                    <h3 style={{ fontSize: "14px", color: C.white, margin: "0", fontWeight: "700" }}>
                                         {roadmap[expandedStage].stage}
                                     </h3>
                                 </div>
@@ -245,7 +224,7 @@ export default function BuildRoadmap({ productDetails }) {
                                         background: "transparent",
                                         border: "none",
                                         color: C.whiteLow,
-                                        fontSize: "18px",
+                                        fontSize: "16px",
                                         cursor: "pointer",
                                         padding: "0"
                                     }}
@@ -254,20 +233,20 @@ export default function BuildRoadmap({ productDetails }) {
                                 </button>
                             </div>
 
-                            <p style={{ fontSize: "13px", color: C.whiteMid, margin: "0 0 20px 0", lineHeight: "1.6" }}>
+                            <p style={{ fontSize: "11px", color: C.whiteMid, margin: "0 0 12px 0", lineHeight: "1.4" }}>
                                 {roadmap[expandedStage].description}
                             </p>
 
-                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px" }}>
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
                                 {/* Tasks */}
                                 <div>
-                                    <h5 style={{ fontSize: "10px", color: C.accent, letterSpacing: "0.1em", marginBottom: "12px", fontWeight: "600" }}>
-                                        // TASKS
+                                    <h5 style={{ fontSize: "9px", color: C.accent, letterSpacing: "0.1em", marginBottom: "8px", fontWeight: "600" }}>
+                                        {`// TASKS`}
                                     </h5>
                                     <ul style={{ padding: "0", margin: "0", listStyle: "none" }}>
                                         {(roadmap[expandedStage].tasks || []).map((t, i) => (
-                                            <li key={i} style={{ display: "flex", gap: "8px", alignItems: "flex-start", marginBottom: "8px", fontSize: "11px", color: C.whiteHi }}>
-                                                <span style={{ color: C.ready, marginTop: "2px" }}>✓</span>
+                                            <li key={i} style={{ display: "flex", gap: "6px", alignItems: "flex-start", marginBottom: "5px", fontSize: "10px", color: C.whiteHi }}>
+                                                <span style={{ color: C.ready, marginTop: "1px", flexShrink: 0 }}>✓</span>
                                                 <span>{t}</span>
                                             </li>
                                         ))}
@@ -275,19 +254,19 @@ export default function BuildRoadmap({ productDetails }) {
                                 </div>
 
                                 {/* Commands & AI */}
-                                <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                                <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
                                     {roadmap[expandedStage].commands && roadmap[expandedStage].commands.length > 0 && (
                                         <div>
-                                            <h5 style={{ fontSize: "10px", color: C.ready, letterSpacing: "0.1em", marginBottom: "8px", fontWeight: "600" }}>
+                                            <h5 style={{ fontSize: "9px", color: C.ready, letterSpacing: "0.1em", marginBottom: "6px", fontWeight: "600" }}>
                                                 &gt; TERMINAL COMMANDS
                                             </h5>
-                                            <div style={{ background: "rgba(0,0,0,0.5)", border: `1px solid ${C.whiteGhost}`, padding: "12px", borderRadius: "4px" }}>
+                                            <div style={{ background: "rgba(0,0,0,0.5)", border: `1px solid ${C.whiteGhost}`, padding: "8px", borderRadius: "4px" }}>
                                                 {(roadmap[expandedStage].commands || []).map((c, i) => (
-                                                    <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: i < roadmap[expandedStage].commands.length - 1 ? "8px" : "0" }}>
-                                                        <code style={{ fontSize: "10px", color: C.ready, wordBreak: "break-all" }}>{c}</code>
+                                                    <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: i < roadmap[expandedStage].commands.length - 1 ? "6px" : "0" }}>
+                                                        <code style={{ fontSize: "9px", color: C.ready, wordBreak: "break-all" }}>{c}</code>
                                                         <button
                                                             onClick={(e) => { e.stopPropagation(); copyToClipboard(c, `cmd-${expandedStage}-${i}`); }}
-                                                            style={{ background: "none", border: "none", color: C.whiteLow, cursor: "pointer", fontSize: "9px", padding: "4px 8px" }}
+                                                            style={{ background: "none", border: "none", color: C.whiteLow, cursor: "pointer", fontSize: "8px", padding: "2px 4px", flexShrink: 0 }}
                                                         >
                                                             {copiedContent === `cmd-${expandedStage}-${i}` ? "✓" : "COPY"}
                                                         </button>
@@ -299,16 +278,16 @@ export default function BuildRoadmap({ productDetails }) {
 
                                     {roadmap[expandedStage].aiPrompt && (
                                         <div>
-                                            <h5 style={{ fontSize: "10px", color: "#b684ff", letterSpacing: "0.1em", marginBottom: "8px", fontWeight: "600" }}>
+                                            <h5 style={{ fontSize: "9px", color: "#b684ff", letterSpacing: "0.1em", marginBottom: "6px", fontWeight: "600" }}>
                                                 ✨ AI PROMPT
                                             </h5>
-                                            <div style={{ background: "rgba(182,132,255,0.1)", border: "1px solid rgba(182,132,255,0.3)", padding: "12px", borderRadius: "4px" }}>
-                                                <p style={{ fontSize: "11px", color: C.whiteMid, margin: "0 0 8px 0", fontStyle: "italic" }}>
+                                            <div style={{ background: "rgba(182,132,255,0.1)", border: "1px solid rgba(182,132,255,0.3)", padding: "8px", borderRadius: "4px" }}>
+                                                <p style={{ fontSize: "10px", color: C.whiteMid, margin: "0 0 6px 0", fontStyle: "italic" }}>
                                                     &quot;{roadmap[expandedStage].aiPrompt}&quot;
                                                 </p>
                                                 <button
                                                     onClick={(e) => { e.stopPropagation(); copyToClipboard(roadmap[expandedStage].aiPrompt, `prompt-${expandedStage}`); }}
-                                                    style={{ background: "rgba(182,132,255,0.2)", border: "1px solid rgba(182,132,255,0.5)", color: "#b684ff", cursor: "pointer", fontSize: "9px", padding: "4px 8px", width: "100%", fontFamily: "monospace" }}
+                                                    style={{ background: "rgba(182,132,255,0.2)", border: "1px solid rgba(182,132,255,0.5)", color: "#b684ff", cursor: "pointer", fontSize: "8px", padding: "3px 6px", width: "100%", fontFamily: "monospace" }}
                                                 >
                                                     {copiedContent === `prompt-${expandedStage}` ? "✓ COPIED" : "COPY PROMPT"}
                                                 </button>

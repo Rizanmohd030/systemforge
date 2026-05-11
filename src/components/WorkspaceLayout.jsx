@@ -252,7 +252,7 @@ export default function WorkspaceLayout({
       </div>
 
       {/* ─── CONTENT ──────────────────────────────────────────────────────────── */}
-      <div style={{ position: "relative", zIndex: 10 }}>
+      <div style={{ position: "relative", zIndex: 10, width: "100%", display: "flex", justifyContent: "stretch" }}>
         {children}
       </div>
 
