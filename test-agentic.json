@@ -1,0 +1,9 @@
+{
+  "sessionId": null,
+  "module": "refinement",
+  "userInput": "I want to add email notifications as a core feature",
+  "context": {
+    "userId": "test-user",
+    "productIdea": "A project management tool for remote teams"
+  }
+}
