@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from "react"
 import { Space_Grotesk } from "next/font/google"
 import IdeaRefinement from "@/components/IdeaRefinement"
 import InteractiveGrid from "@/components/InteractiveGrid"
-import WorkflowMap from "@/components/WorkflowMap"
+import SystemDesign from "@/components/SystemDesign"
 import TechStack from "@/components/TechStack"
 import SystemArchitecture from "@/components/SystemArchitecture"
 import BuildRoadmap from "@/components/BuildRoadmap"
@@ -38,9 +38,9 @@ const MODULES = [
     side: "left", row: 0,
   },
   {
-    id: "workflow", code: "02", label: "WORKFLOW MAP",
-    description: "Generates step-by-step user flows and interaction diagrams.",
-    detail: ["User Onboarding", "Core Actions", "Edge Cases", "Exit Paths"],
+    id: "systemdesign", code: "02", label: "SYSTEM DESIGN",
+    description: "Designs your database schema, API endpoints, and service architecture.",
+    detail: ["DB Schema", "API Endpoints", "Services", "Data Flow"],
     status: "READY",
     side: "right", row: 0,
   },
@@ -914,7 +914,7 @@ function ModulePanel({ module, idea, onBack }) {
         {`// ${module.code} — ${module.label}`}
       </p>
       {module.id === "refinement" && idea && <IdeaRefinement rawIdea={idea} />}
-      {module.id === "workflow" && <WorkflowMap productDetails={idea} />}
+      {module.id === "systemdesign" && <SystemDesign productDetails={idea} />}
       {module.id === "techstack" && <TechStack productDetails={idea} />}
       {module.id === "architecture" && <SystemArchitecture productDetails={idea} />}
       {module.id === "roadmap" && <BuildRoadmap productDetails={idea} />}

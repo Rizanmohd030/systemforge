@@ -5,7 +5,7 @@ import { runValidation } from '@/lib/validation'
 const defaultContext = {
     idea: "",
     refinement: null,
-    workflow: null,
+    systemDesign: null,
     stack: null,
     architecture: null,
     roadmap: null,
@@ -31,7 +31,7 @@ export const useProjectStore = create(
                 // Clear dependent states when refinement changes
                 set({ 
                     refinement, 
-                    workflow: null, 
+                    systemDesign: null, 
                     stack: null, 
                     architecture: null, 
                     roadmap: null, 
@@ -40,8 +40,8 @@ export const useProjectStore = create(
                 get().validate()
             },
 
-            setWorkflow: (workflow) => {
-                set({ workflow })
+            setSystemDesign: (systemDesign) => {
+                set({ systemDesign })
                 get().validate()
             },
 
@@ -93,7 +93,7 @@ export const useProjectStore = create(
             partialize: (state) => ({ 
                 idea: state.idea,
                 refinement: state.refinement,
-                workflow: state.workflow,
+                systemDesign: state.systemDesign,
                 stack: state.stack,
                 architecture: state.architecture,
                 roadmap: state.roadmap,

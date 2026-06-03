@@ -53,24 +53,27 @@ Example: "If you prioritize [A], then [B] will happen visually."
 
 {format_instructions}`
 
-// ─── Workflow Mapping Prompt ─────────────────────────────────────
-export const buildWorkflowPrompt = (context) => `You are a Visual Systems Designer. Map the core user journey/workflow for this product.
-Ensure your workflow accurately reflects the requested features.
+// ─── System Design Prompt ────────────────────────────────────────
+export const buildSystemDesignPrompt = (context) => `You are a Senior Systems Designer and Database Architect. Design the complete system internals for this product.
 
-STRICT CONTRAINTS:
-- No long sentences. 
-- Labels MUST be 2-3 words maximum.
-- Focus on the "Path" - how a user gets value from the system.
+Your output must include:
+1. **Database Schema**: Design all required database tables with columns, types, and constraints. Include foreign key relationships.
+2. **API Endpoints**: Design RESTful API endpoints grouped by resource/domain. Include HTTP method, path, and a brief description.
+3. **Services**: Break the system into logical services/modules with clear responsibilities and ownership of APIs and DB tables.
+
+Design Principles:
+- Follow normalized database design (3NF minimum).
+- Use RESTful conventions for API paths.
+- Services should follow Single Responsibility Principle.
+- Include authentication-related tables/endpoints if the product requires user accounts.
+- Include common fields like id, created_at, updated_at on all tables.
+- Column types should be standard SQL types (VARCHAR, INTEGER, BOOLEAN, TIMESTAMP, TEXT, UUID, JSON, etc.).
 
 --- PROJECT CONTEXT ---
 ${getContextSummary(context)}
 -----------------------
 
-{format_instructions}
-
-Visual Layout Rules:
-- Flow should generally go from top to bottom.
-- Space nodes properly for a React Flow canvas (0-600 range).`
+{format_instructions}`
 
 // ─── Architecture Generation Prompt ──────────────────────────────
 export const buildArchitecturePrompt = (context) => `You are a Lead Software Architect. Generate a comprehensive System Architecture and Product Requirements Doc (PRD).
