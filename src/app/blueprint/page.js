@@ -9,6 +9,7 @@ import TechStack from "@/components/TechStack"
 import SystemArchitecture from "@/components/SystemArchitecture"
 import BuildRoadmap from "@/components/BuildRoadmap"
 import PromptBuilder from "@/components/PromptBuilder"
+import MarketResearch from "@/components/MarketResearch"
 import { useProjectStore } from "@/store/projectStore"
 
 const nothingFont = Space_Grotesk({
@@ -978,11 +979,19 @@ function ModulePanel({ module, idea, onBack }) {
       <p style={{ fontSize: "11px", color: C.whiteLow, marginBottom: "20px", letterSpacing: "0.08em" }}>
         {`// ${module.code} — ${module.label}`}
       </p>
-      {module.id === "refinement" && idea && <IdeaRefinement rawIdea={idea} />}
-      {module.id === "systemdesign" && <SystemDesign productDetails={idea} />}
-      {module.id === "techstack" && <TechStack productDetails={idea} />}
-      {module.id === "architecture" && <SystemArchitecture productDetails={idea} />}
-      {module.id === "roadmap" && <BuildRoadmap productDetails={idea} />}
+
+      {/* ── MODULE DISPATCH — keyed by configKey so domain label overrides don't break routing ── */}
+      {module.id === "refinement"    && idea && <IdeaRefinement rawIdea={idea} />}
+
+      {/* workflow_map — for business/creative shows Market Research / Audience Research */}
+      {module.id === "systemdesign"  && module.configKey === "workflow_map" && <MarketResearch productDetails={idea} />}
+
+      {/* market_research explicit module (if a separate card were added in future) */}
+      {module.configKey === "market_research" && <MarketResearch productDetails={idea} />}
+
+      {module.id === "techstack"     && <TechStack productDetails={idea} />}
+      {module.id === "architecture"  && <SystemArchitecture productDetails={idea} />}
+      {module.id === "roadmap"       && <BuildRoadmap productDetails={idea} />}
       {module.id === "promptbuilder" && <PromptBuilder productDetails={idea} />}
     </div>
   )

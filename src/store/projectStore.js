@@ -12,6 +12,7 @@ const defaultContext = {
     prompts: null,
     blueprintV1: null,       // From Groq classify — Blueprint V1 expansion
     moduleConfig: null,      // From Groq classify — controls which Gemini modules are enabled
+    marketResearch: null,    // From Gemini + Search Grounding — competitor/market data
 }
 
 export const useProjectStore = create(
@@ -82,6 +83,7 @@ export const useProjectStore = create(
                     architecture: null,
                     roadmap: null,
                     prompts: null,
+                    marketResearch: null,  // Clear market research when idea changes
                 })
                 get().validate()
             },
@@ -94,7 +96,18 @@ export const useProjectStore = create(
                 set({ moduleConfig })
             },
 
+            /**
+             * Store the Market Research / Audience Research output from Gemini + Search Grounding.
+             * This is consumed by later modules via getCurrentContext() for competitive awareness.
+             */
+            setMarketResearch: (marketResearch) => {
+                set({ marketResearch })
+                get().validate()
+            },
+
             // Full Context Getter
+            // Includes marketResearch so later modules (tech stack, roadmap, prompts)
+            // can incorporate competitive landscape awareness into their outputs.
             getCurrentContext: () => {
                 const state = get()
                 return {
@@ -102,7 +115,8 @@ export const useProjectStore = create(
                     idea: state.idea,
                     refinement: state.refinement,
                     stack: state.stack,
-                    architecture: state.architecture
+                    architecture: state.architecture,
+                    marketResearch: state.marketResearch,
                 }
             },
 
@@ -129,6 +143,7 @@ export const useProjectStore = create(
                 prompts: state.prompts,
                 blueprintV1: state.blueprintV1,
                 moduleConfig: state.moduleConfig,
+                marketResearch: state.marketResearch,
             }), // Only save data, not functions/processing state
         }
     )
