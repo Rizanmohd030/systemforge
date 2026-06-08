@@ -11,11 +11,11 @@ export async function GET(request) {
     await loadAllTools();
 
     const url = new URL(request.url);
-    const module = url.searchParams.get('module');
+    const moduleName = url.searchParams.get('module');
 
     let tools;
-    if (module) {
-      tools = getToolsByModule(module);
+    if (moduleName) {
+      tools = getToolsByModule(moduleName);
     } else {
       tools = getAllTools();
     }

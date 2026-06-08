@@ -7,7 +7,7 @@
 import { getServerSession } from 'next-auth/next';
 import GoogleProvider from 'next-auth/providers/google';
 import CredentialsProvider from 'next-auth/providers/credentials';
-import { Users } from '@/lib/db/models';
+import { getOrCreateUser } from '@/lib/db/users.js';
 
 /**
  * NextAuth configuration object
@@ -61,54 +61,56 @@ export const authConfig = {
 
   callbacks: {
     /**
-     * JWT callback: Add user info to JWT token
+     * JWT callback: Add user info to JWT token.
+     * dbUserId is the external_id stored in our users table.
      */
     async jwt({ token, user, account }) {
       if (user) {
-        token.id = user.id;
-        token.email = user.email;
-        token.name = user.name;
-        token.image = user.image;
+        // Canonical external_id: Google subject ID for OAuth, email for Credentials
+        token.id       = user.id;
+        token.email    = user.email;
+        token.name     = user.name;
+        token.image    = user.image;
+        token.dbUserId = user.id || user.email; // persists across requests
       }
       return token;
     },
 
     /**
-     * Session callback: Add token info to session
+     * Session callback: Expose dbUserId to client and server components.
      */
     async session({ session, token }) {
       if (token) {
-        session.user.id = token.id;
-        session.user.email = token.email;
-        session.user.name = token.name;
-        session.user.image = token.image;
+        session.user.id       = token.id;
+        session.user.email    = token.email;
+        session.user.name     = token.name;
+        session.user.image    = token.image;
+        session.user.dbUserId = token.dbUserId; // safe to use in API routes
       }
       return session;
     },
 
     /**
-     * SignIn callback: Create/update user in database on first login
+     * SignIn callback: Upsert user into our users table on every login.
+     * Idempotent — ON CONFLICT handles repeated logins gracefully.
      */
-    async signIn({ user, account, profile, email, credentials }) {
+    async signIn({ user, account, profile }) {
       try {
         if (!user.email) {
-          console.error('No email in sign-in attempt');
+          console.error('Sign-in rejected: no email');
           return false;
         }
 
-        // Create or get user from database
-        const externalId = user.id || user.email;
-        const dbUser = await Users.getOrCreate(
-          externalId,
-          user.email,
-          user.name || profile?.name
-        );
+        // For Google OAuth: use the OAuth subject as external_id.
+        // For Credentials: use email (since there’s no OAuth id).
+        const externalId = account?.providerAccountId || user.id || user.email;
 
-        console.log(`✓ User signed in/created: ${dbUser.external_id}`);
+        await getOrCreateUser(externalId, user.email, user.name || profile?.name);
         return true;
       } catch (error) {
-        console.error('Error in signIn callback:', error);
-        return false;
+        console.error('signIn callback error:', error.message);
+        // Don’t block sign-in on DB failure — log and allow
+        return true;
       }
     },
 

@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { useProjectStore } from "@/store/projectStore"
+import { useSession, signOut } from "next-auth/react"
 
 // ─── CONSTANTS ────────────────────────────────────────────────────────────────
 
@@ -25,6 +26,7 @@ const EXAMPLES = [
 export default function Home() {
   const router = useRouter()
   const { setIdea: setStoreIdea, setBlueprintV1, setModuleConfig } = useProjectStore()
+  const { data: session, status } = useSession()
 
   // ── Boot sequence state ───────────────────────────────────────────────────
   const [bootLines, setBootLines] = useState([])
@@ -199,13 +201,41 @@ export default function Home() {
         <div className="terminal-window" style={{ flex: "1" }}>
 
           {/* Traffic-light header */}
-          <div className="terminal-header">
-            <div className="terminal-buttons">
-              <span className="btn red" />
-              <span className="btn yellow" />
-              <span className="btn green" />
+          <div className="terminal-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+              <div className="terminal-buttons">
+                <span className="btn red" />
+                <span className="btn yellow" />
+                <span className="btn green" />
+              </div>
+              <span className="terminal-title">bash — systemforge</span>
             </div>
-            <span className="terminal-title">bash — systemforge</span>
+            
+            {/* Auth Indicator */}
+            <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', display: 'flex', gap: '12px', alignItems: 'center' }}>
+              {status === 'authenticated' ? (
+                <>
+                  <span>[ LOGGED IN: {session.user.email} ]</span>
+                  <button 
+                    onClick={() => signOut()}
+                    style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: 'rgba(255,255,255,0.6)', padding: '2px 6px', cursor: 'pointer', borderRadius: '4px' }}
+                    onMouseEnter={e => { e.currentTarget.style.color = '#fff'; e.currentTarget.style.borderColor = 'rgba(255,100,100,0.5)' }}
+                    onMouseLeave={e => { e.currentTarget.style.color = 'rgba(255,255,255,0.6)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)' }}
+                  >
+                    SIGN OUT
+                  </button>
+                </>
+              ) : status === 'unauthenticated' ? (
+                <button 
+                  onClick={() => router.push('/auth/signin')}
+                  style={{ background: 'transparent', border: '1px solid rgba(120,180,255,0.4)', color: 'rgba(120,180,255,1)', padding: '2px 6px', cursor: 'pointer', borderRadius: '4px' }}
+                >
+                  SIGN IN
+                </button>
+              ) : (
+                <span>[ AUTHENTICATING... ]</span>
+              )}
+            </div>
           </div>
 
           <div className="terminal-body">

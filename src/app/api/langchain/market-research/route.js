@@ -281,7 +281,7 @@ export async function POST(req) {
 
     // ── LOG TO action_log TABLE ───────────────────────────────────────────────
     try {
-      const module = domain === 'creative' ? 'audience-research' : 'market-research';
+      const moduleName = domain === 'creative' ? 'audience-research' : 'market-research';
       await query(
         `INSERT INTO action_log
            (user_id, session_id, action_type, status, input_params, output_data)
@@ -289,7 +289,7 @@ export async function POST(req) {
         [
           effectiveUserId,
           sessionId || null,
-          module,
+          moduleName,
           'success',
           JSON.stringify({ idea: idea.trim().substring(0, 200), domain }),
           JSON.stringify({
