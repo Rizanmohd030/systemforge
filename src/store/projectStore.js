@@ -27,7 +27,21 @@ const defaultContext = {
     roadmap: null,
     prompts: null,
     blueprintV1: null,       // From Groq classify — Blueprint V1 expansion
-    moduleConfig: null,      // From Groq classify — controls which Gemini modules are enabled
+
+    // FUTURE: moduleConfig will be set dynamically by Groq domain classification
+    moduleConfig: {
+      domain: 'technical',
+      modules: {
+        idea_refinement:     { enabled: true, label: "Idea Refinement" },
+        workflow_map:        { enabled: true, label: "Workflow Map" },
+        market_research:     { enabled: false, label: "Market Research" },
+        tech_stack:          { enabled: true, label: "Tech Stack" },
+        system_architecture: { enabled: true, label: "System Architecture" },
+        roadmap:             { enabled: true, label: "Build Roadmap" },
+        prompt_builder:      { enabled: true, label: "Prompt Builder" }
+      }
+    },
+    
     marketResearch: null,    // From Gemini + Search Grounding — competitor/market data
 }
 

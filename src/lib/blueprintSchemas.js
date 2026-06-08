@@ -68,13 +68,17 @@ export const ModuleConfigSchema = z.object({
  * Combines Blueprint V1 fields + domain + module_config
  */
 export const ClassifyExpandSchema = z.object({
-  domain: z.enum(['technical', 'business', 'creative', 'mixed']),
+  // FUTURE: add domain field back when multi-domain support is activated
+  // domain: z.enum(['technical', 'business', 'creative', 'mixed']),
+  domain: z.string().optional(),
   product_summary: z.string().min(10).max(500),
   target_users: z.array(z.string().min(3)).min(1).max(10),
   business_goals: z.array(z.string().min(5)).min(1).max(10),
   implied_features: z.array(z.string().min(3)).min(1).max(20),
   constraints: z.array(z.string().min(5)).min(0).max(10),
-  module_config: ModuleConfigSchema,
+  // FUTURE: add module_config field back
+  // module_config: ModuleConfigSchema,
+  module_config: z.any().optional(),
 });
 
 /**

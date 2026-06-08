@@ -45,8 +45,27 @@ export async function POST(req) {
     // Single Groq call: classify domain + expand Blueprint V1 + build module_config
     const raw = await classifyAndExpand(rawIdea.trim());
 
-    // Validate full response shape with Zod
+    // Validate full response shape with Zod (relaxed to allow but ignore domain and module_config)
     const validated = ClassifyExpandSchema.parse(raw);
+
+    // FUTURE: multi-domain support
+    // const effectiveDomain = validated.domain || 'technical';
+    // const effectiveModuleConfig = validated.module_config;
+    
+    // HARDCODED TECHNICAL DOMAIN FOR NOW
+    const effectiveDomain = 'technical';
+    const effectiveModuleConfig = {
+      domain: 'technical',
+      modules: {
+        idea_refinement:     { enabled: true, label: "Idea Refinement" },
+        workflow_map:        { enabled: true, label: "Workflow Map" },
+        market_research:     { enabled: false, label: "Market Research" },
+        tech_stack:          { enabled: true, label: "Tech Stack" },
+        system_architecture: { enabled: true, label: "System Architecture" },
+        roadmap:             { enabled: true, label: "Build Roadmap" },
+        prompt_builder:      { enabled: true, label: "Prompt Builder" }
+      }
+    };
 
     // Persist to DB if user is authenticated
     let savedBlueprint = null;
@@ -62,9 +81,9 @@ export async function POST(req) {
             constraints:      validated.constraints,
           },
           'groq-classify',
-          `Blueprint V1 [${validated.domain}]: ${validated.product_summary?.substring(0, 50)}...`
+          `Blueprint V1 [${effectiveDomain}]: ${validated.product_summary?.substring(0, 50)}...`
         );
-        console.log(`✓ Blueprint V${savedBlueprint.version_number} saved (user: ${auth.userId}, domain: ${validated.domain})`);
+        console.log(`✓ Blueprint V${savedBlueprint.version_number} saved (user: ${auth.userId}, domain: ${effectiveDomain})`);
       } catch (dbError) {
         // Non-fatal — Zustand is the client-side source of truth
         console.warn('Could not persist blueprint to DB:', dbError.message);
@@ -75,16 +94,16 @@ export async function POST(req) {
     return Response.json(
       {
         success:      true,
-        domain:       validated.domain,
+        domain:       effectiveDomain,
         blueprint_v1: {
           product_summary:  validated.product_summary,
           target_users:     validated.target_users,
           business_goals:   validated.business_goals,
           implied_features: validated.implied_features,
           constraints:      validated.constraints,
-          domain:           validated.domain,
+          domain:           effectiveDomain,
         },
-        module_config: validated.module_config,
+        module_config: effectiveModuleConfig,
         blueprintId:   savedBlueprint?.id || null,
         version:       savedBlueprint?.version_number || 1,
         persisted:     !!savedBlueprint,

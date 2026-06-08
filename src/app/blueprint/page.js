@@ -96,9 +96,15 @@ const MODULE_BASE = [
  */
 function buildModules(moduleConfig, isRefined) {
   return MODULE_BASE.map(base => {
-    const cfg = moduleConfig?.modules?.[base.configKey]
-    const enabled = cfg ? cfg.enabled : true  // default all enabled
-    const label   = cfg?.label ? cfg.label.toUpperCase() : base.defaultLabel
+    // FUTURE: domain-based labels and dynamic enablement
+    // const cfg = moduleConfig?.modules?.[base.configKey]
+    // const enabled = cfg ? cfg.enabled : true
+    // const label   = cfg?.label ? cfg.label.toUpperCase() : base.defaultLabel
+    
+    // HARDCODED TECHNICAL DEFAULTS
+    const enabled = true;
+    const label = base.defaultLabel;
+
     return {
       ...base,
       label,
@@ -108,13 +114,13 @@ function buildModules(moduleConfig, isRefined) {
   })
 }
 
-// ─── DOMAIN BANNER CONFIG ─────────────────────────────────────────────────────
-const DOMAIN_META = {
-  technical: { label: "TECHNICAL IDEA",  color: "rgba(100,200,255,1)",  bg: "rgba(30,100,200,0.12)",  border: "rgba(100,200,255,0.35)" },
-  business:  { label: "BUSINESS IDEA",   color: "rgba(120,255,160,1)",  bg: "rgba(30,160,80,0.12)",   border: "rgba(120,255,160,0.35)" },
-  creative:  { label: "CREATIVE IDEA",   color: "rgba(220,140,255,1)",  bg: "rgba(140,30,200,0.12)",  border: "rgba(220,140,255,0.35)" },
-  mixed:     { label: "MIXED IDEA",       color: "rgba(255,200,80,1)",   bg: "rgba(180,120,0,0.12)",   border: "rgba(255,200,80,0.35)" },
-}
+// FUTURE: multi-domain labels and styles
+// const DOMAIN_META = {
+//   technical: { label: "TECHNICAL IDEA",  color: "rgba(100,200,255,1)",  bg: "rgba(30,100,200,0.12)",  border: "rgba(100,200,255,0.35)" },
+//   business:  { label: "BUSINESS IDEA",   color: "rgba(120,255,160,1)",  bg: "rgba(30,160,80,0.12)",   border: "rgba(120,255,160,0.35)" },
+//   creative:  { label: "CREATIVE IDEA",   color: "rgba(220,140,255,1)",  bg: "rgba(140,30,200,0.12)",  border: "rgba(220,140,255,0.35)" },
+//   mixed:     { label: "MIXED IDEA",       color: "rgba(255,200,80,1)",   bg: "rgba(180,120,0,0.12)",   border: "rgba(255,200,80,0.35)" },
+// }
 
 // ─── MAIN PAGE ────────────────────────────────────────────────────────────────
 export default function BlueprintPage() {
@@ -242,10 +248,11 @@ export default function BlueprintPage() {
         }}>
           SYSTEMFORGE
         </h1>
-        {/* Domain banner — only shown when Groq classify has run */}
+        {/* FUTURE: domain banner
         {moduleConfig?.domain && (
           <DomainBanner domain={moduleConfig.domain} />
         )}
+        */}
       </div>
 
       {!activeModule ? (
@@ -558,8 +565,8 @@ function ExplodedCard({ mod, style, isHovered, onHover, onClick, refCallback }) 
   )
 }
 
-// ─── DOMAIN BANNER ────────────────────────────────────────────────────────────
-// Shown below the SYSTEMFORGE title when Groq classify has run
+// FUTURE: domain banner
+/*
 function DomainBanner({ domain }) {
   const meta = DOMAIN_META[domain] || DOMAIN_META.mixed
   return (
@@ -601,6 +608,7 @@ function DomainBanner({ domain }) {
     </div>
   )
 }
+*/
 function Hub2D({ isProcessing, hasWarnings }) {
   const size = 280;
   const cx = size / 2, cy = size / 2;
@@ -983,11 +991,11 @@ function ModulePanel({ module, idea, onBack }) {
       {/* ── MODULE DISPATCH — keyed by configKey so domain label overrides don't break routing ── */}
       {module.id === "refinement"    && idea && <IdeaRefinement rawIdea={idea} />}
 
-      {/* workflow_map — for business/creative shows Market Research / Audience Research */}
-      {module.id === "systemdesign"  && module.configKey === "workflow_map" && <MarketResearch productDetails={idea} />}
+      {/* workflow_map — SystemDesign is the original module */}
+      {module.id === "systemdesign"  && module.configKey === "workflow_map" && <SystemDesign productDetails={idea} />}
 
-      {/* market_research explicit module (if a separate card were added in future) */}
-      {module.configKey === "market_research" && <MarketResearch productDetails={idea} />}
+      {/* FUTURE: market_research explicit module (if a separate card were added in future) */}
+      {/* {module.configKey === "market_research" && <MarketResearch productDetails={idea} />} */}
 
       {module.id === "techstack"     && <TechStack productDetails={idea} />}
       {module.id === "architecture"  && <SystemArchitecture productDetails={idea} />}
