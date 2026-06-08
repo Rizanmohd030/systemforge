@@ -28,87 +28,116 @@ const C = {
   ready:      "rgba(100,220,255,1)",
 }
 
-// ─── MODULES ──────────────────────────────────────────────────────────────────
-// Exploded view: 3 modules fan out to the left, 3 to the right
-const MODULES = [
+// ─── MODULE BASE DEFINITIONS ─────────────────────────────────────────────────
+// Static shape + descriptions. Labels are overridden by moduleConfig from Groq.
+const MODULE_BASE = [
   {
-    id: "refinement", code: "01", label: "IDEA REFINEMENT",
+    id: "refinement",
+    configKey: "idea_refinement",
+    code: "01",
+    defaultLabel: "IDEA REFINEMENT",
     description: "Refines your raw idea into a structured product concept.",
-    detail: null, status: "READY",
+    detail: null,
     side: "left", row: 0,
   },
   {
-    id: "systemdesign", code: "02", label: "SYSTEM DESIGN",
-    description: "Designs your database schema, API endpoints, and service architecture.",
-    detail: ["DB Schema", "API Endpoints", "Services", "Data Flow"],
-    status: "READY",
+    id: "systemdesign",
+    configKey: "workflow_map",
+    code: "02",
+    defaultLabel: "WORKFLOW MAP",
+    description: "Maps the core workflow, user journey, and service interactions.",
+    detail: ["User Journey", "Key Flows", "Touchpoints", "Handoffs"],
     side: "right", row: 0,
   },
   {
-    id: "techstack", code: "03", label: "TECH STACK",
+    id: "techstack",
+    configKey: "tech_stack",
+    code: "03",
+    defaultLabel: "TECH STACK",
     description: "Recommends the ideal stack based on your requirements.",
     detail: ["Frontend", "Backend", "Database", "Infra & CI/CD"],
-    status: "READY",
     side: "left", row: 1,
   },
   {
-    id: "architecture", code: "04", label: "SYSTEM ARCHITECTURE",
+    id: "architecture",
+    configKey: "system_architecture",
+    code: "04",
+    defaultLabel: "SYSTEM ARCHITECTURE",
     description: "Generates your PRD and architectural system diagram.",
     detail: ["Problem Statement", "Core Features", "System Layers", "Data Flow"],
-    status: "READY",
     side: "right", row: 1,
   },
   {
-    id: "roadmap", code: "05", label: "BUILD ROADMAP",
+    id: "roadmap",
+    configKey: "roadmap",
+    code: "05",
+    defaultLabel: "BUILD ROADMAP",
     description: "Generates an actionable, step-by-step development roadmap.",
     detail: ["Milestones", "Tasks", "Terminal Commands", "AI Prompts"],
-    status: "READY",
     side: "left", row: 2,
   },
   {
-    id: "promptbuilder", code: "06", label: "PROMPT BUILDER",
+    id: "promptbuilder",
+    configKey: "prompt_builder",
+    code: "06",
+    defaultLabel: "PROMPT BUILDER",
     description: "Synthesizes your blueprint into a master prompt for AI IDEs.",
     detail: ["Target IDEs", "Architecture Rules", "Context Injection", "Instruction Set"],
-    status: "READY",
     side: "right", row: 2,
   },
 ]
 
-const HUB = { x: 50, y: 50 }
+/**
+ * Build the live module list from Groq moduleConfig.
+ * Falls back to all-enabled defaults when moduleConfig is null (e.g. cold load).
+ * @param {object|null} moduleConfig  — from Zustand (Groq classify output)
+ * @param {boolean}     isRefined     — whether refinement has run
+ */
+function buildModules(moduleConfig, isRefined) {
+  return MODULE_BASE.map(base => {
+    const cfg = moduleConfig?.modules?.[base.configKey]
+    const enabled = cfg ? cfg.enabled : true  // default all enabled
+    const label   = cfg?.label ? cfg.label.toUpperCase() : base.defaultLabel
+    return {
+      ...base,
+      label,
+      enabled,
+      status: enabled ? (isRefined ? "REFINED" : "READY") : "LOCKED",
+    }
+  })
+}
+
+// ─── DOMAIN BANNER CONFIG ─────────────────────────────────────────────────────
+const DOMAIN_META = {
+  technical: { label: "TECHNICAL IDEA",  color: "rgba(100,200,255,1)",  bg: "rgba(30,100,200,0.12)",  border: "rgba(100,200,255,0.35)" },
+  business:  { label: "BUSINESS IDEA",   color: "rgba(120,255,160,1)",  bg: "rgba(30,160,80,0.12)",   border: "rgba(120,255,160,0.35)" },
+  creative:  { label: "CREATIVE IDEA",   color: "rgba(220,140,255,1)",  bg: "rgba(140,30,200,0.12)",  border: "rgba(220,140,255,0.35)" },
+  mixed:     { label: "MIXED IDEA",       color: "rgba(255,200,80,1)",   bg: "rgba(180,120,0,0.12)",   border: "rgba(255,200,80,0.35)" },
+}
 
 // ─── MAIN PAGE ────────────────────────────────────────────────────────────────
 export default function BlueprintPage() {
-  const { idea, refinement, setIdea, isProcessing, validationWarnings } = useProjectStore()
+  const { idea, refinement, setIdea, isProcessing, validationWarnings, moduleConfig } = useProjectStore()
   const isRefined = !!refinement
   const [activeModule, setActiveModule] = useState(null)
 
+  // Build module list — data-driven from Groq moduleConfig (or defaults if null)
+  const modules = buildModules(moduleConfig, isRefined)
+
   // Ensure idea is loaded from localStorage on mount
   useEffect(() => {
-    // Check if idea is missing and try to load from storage
     if (!idea && typeof window !== "undefined") {
-      // Try new Zustand storage location first
       const projectKey = "systemforge_project_v2"
       const projectData = localStorage.getItem(projectKey)
-      
       let ideaText = null
       if (projectData) {
         try {
           const parsed = JSON.parse(projectData)
           ideaText = parsed.state?.idea || parsed.idea
-        } catch (e) {
-          // Skip parsing error
-        }
+        } catch (e) { /* skip */ }
       }
-      
-      // Fallback to old storage location
-      if (!ideaText) {
-        const oldIdea = localStorage.getItem("systemforge_idea")
-        ideaText = oldIdea
-      }
-      
-      if (ideaText) {
-        setIdea(ideaText)
-      }
+      if (!ideaText) ideaText = localStorage.getItem("systemforge_idea")
+      if (ideaText) setIdea(ideaText)
     }
   }, [idea, setIdea])
 
@@ -210,27 +239,25 @@ export default function BlueprintPage() {
           fontSize: "21px", letterSpacing: "0.18em", color: "white",
           margin: 0, fontWeight: 500, fontFamily: "monospace", textTransform: "uppercase",
         }}>
-          SYSTEMFORGE 
+          SYSTEMFORGE
         </h1>
+        {/* Domain banner — only shown when Groq classify has run */}
+        {moduleConfig?.domain && (
+          <DomainBanner domain={moduleConfig.domain} />
+        )}
       </div>
 
       {!activeModule ? (
-        <HubDiagram 
-          modules={MODULES.map(m => {
-            // Apply refined status to READY modules
-            if (m.status === "READY" && isRefined) {
-              return { ...m, status: "REFINED" }
-            }
-            return m
-          })} 
-          onSelect={mod => { if (mod.status === "READY" || mod.status === "REFINED") setActiveModule(mod.id) }} 
+        <HubDiagram
+          modules={modules}
+          onSelect={mod => { if (mod.status === "READY" || mod.status === "REFINED") setActiveModule(mod.id) }}
           isProcessing={isProcessing}
           validationWarnings={validationWarnings}
         />
       ) : (
         <div style={{ width: "100%", padding: "40px 40px 40px 40px", position: "relative", zIndex: 10 }}>
           <ModulePanel
-            module={MODULES.find(m => m.id === activeModule)}
+            module={modules.find(m => m.id === activeModule)}
             idea={idea}
             onBack={() => setActiveModule(null)}
           />
@@ -392,138 +419,132 @@ function HubDiagram({ modules, onSelect, isProcessing, validationWarnings }) {
 
 // ─── EXPLODED MODULE CARD (Blueprint wireframe style) ─────────────────────────
 function ExplodedCard({ mod, style, isHovered, onHover, onClick, refCallback }) {
-  const isReady = mod.status === "READY" || mod.status === "REFINED"
-  const borderColor = isHovered && isReady ? "rgba(255,255,255,0.55)" : "rgba(255,255,255,0.18)"
-  const bracketColor = isHovered && isReady ? "rgba(255,255,255,0.50)" : "rgba(255,255,255,0.22)"
+  const isReady  = mod.status === "READY" || mod.status === "REFINED"
+  const isLocked = mod.status === "LOCKED"
+
+  const borderColor  = isLocked
+    ? "rgba(255,255,255,0.07)"
+    : isHovered && isReady ? "rgba(255,255,255,0.55)" : "rgba(255,255,255,0.18)"
+  const bracketColor = isLocked
+    ? "rgba(255,255,255,0.06)"
+    : isHovered && isReady ? "rgba(255,255,255,0.50)" : "rgba(255,255,255,0.22)"
   const bracketSize = 12
 
   return (
     <div
       ref={refCallback}
-      onMouseEnter={() => onHover(mod.id)}
+      onMouseEnter={() => !isLocked && onHover(mod.id)}
       onMouseLeave={() => onHover(null)}
       onClick={() => { if (isReady) onClick() }}
       style={{
         ...style,
         cursor: isReady ? "pointer" : "default",
-        opacity: isReady ? 1 : 0.45,
+        opacity: isLocked ? 0.28 : 1,
         transition: "all 0.25s ease",
         zIndex: 4,
+        filter: isLocked ? "grayscale(0.6)" : "none",
       }}
     >
-      {/* Outer wrapper with corner brackets */}
       <div style={{ position: "relative", padding: "2px" }}>
 
-        {/* Corner brackets — ┌ ┐ └ ┘ */}
-        {/* Top-left */}
-        <div style={{
-          position: "absolute", top: 0, left: 0,
-          width: bracketSize, height: bracketSize,
-          borderTop: `1.5px solid ${bracketColor}`,
-          borderLeft: `1.5px solid ${bracketColor}`,
-          transition: "border-color 0.25s",
-        }} />
-        {/* Top-right */}
-        <div style={{
-          position: "absolute", top: 0, right: 0,
-          width: bracketSize, height: bracketSize,
-          borderTop: `1.5px solid ${bracketColor}`,
-          borderRight: `1.5px solid ${bracketColor}`,
-          transition: "border-color 0.25s",
-        }} />
-        {/* Bottom-left */}
-        <div style={{
-          position: "absolute", bottom: 0, left: 0,
-          width: bracketSize, height: bracketSize,
-          borderBottom: `1.5px solid ${bracketColor}`,
-          borderLeft: `1.5px solid ${bracketColor}`,
-          transition: "border-color 0.25s",
-        }} />
-        {/* Bottom-right */}
-        <div style={{
-          position: "absolute", bottom: 0, right: 0,
-          width: bracketSize, height: bracketSize,
-          borderBottom: `1.5px solid ${bracketColor}`,
-          borderRight: `1.5px solid ${bracketColor}`,
-          transition: "border-color 0.25s",
-        }} />
+        {/* Corner brackets */}
+        {["top-left", "top-right", "bottom-left", "bottom-right"].map(corner => (
+          <div key={corner} style={{
+            position: "absolute",
+            top:    corner.startsWith("top")    ? 0 : undefined,
+            bottom: corner.startsWith("bottom") ? 0 : undefined,
+            left:   corner.endsWith("left")     ? 0 : undefined,
+            right:  corner.endsWith("right")    ? 0 : undefined,
+            width: bracketSize, height: bracketSize,
+            borderTop:    corner.startsWith("top")    ? `1.5px solid ${bracketColor}` : undefined,
+            borderBottom: corner.startsWith("bottom") ? `1.5px solid ${bracketColor}` : undefined,
+            borderLeft:   corner.endsWith("left")     ? `1.5px solid ${bracketColor}` : undefined,
+            borderRight:  corner.endsWith("right")    ? `1.5px solid ${bracketColor}` : undefined,
+            transition: "border-color 0.25s",
+          }} />
+        ))}
 
-        {/* Inner card content */}
+        {/* Inner card */}
         <div style={{
           border: `0.5px solid ${borderColor}`,
-          background: isHovered && isReady ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.015)",
+          background: isLocked
+            ? "rgba(255,255,255,0.008)"
+            : isHovered && isReady ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.015)",
           padding: "14px 16px",
           backdropFilter: "blur(4px)",
           transition: "all 0.25s ease",
           boxShadow: isHovered && isReady ? "0 0 30px rgba(255,255,255,0.06)" : "none",
         }}>
 
-          {/* Header: code + status */}
+          {/* Header row: code + status badge */}
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
-            <span style={{
-              fontSize: "9px", color: "rgba(255,255,255,0.30)", letterSpacing: "0.15em",
-              fontFamily: "monospace",
-            }}>
+            <span style={{ fontSize: "9px", color: "rgba(255,255,255,0.30)", letterSpacing: "0.15em", fontFamily: "monospace" }}>
               {`// MODULE ${mod.code}`}
             </span>
             <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
-              <span style={{
-                width: 4, height: 4, borderRadius: "50%", display: "inline-block",
-                background: isReady ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0.15)",
-                boxShadow: isReady ? "0 0 6px rgba(255,255,255,0.4)" : "none",
-              }} />
-              <span style={{ fontSize: "7px", color: "rgba(255,255,255,0.25)", letterSpacing: "0.1em" }}>
-                {mod.status}
-              </span>
+              {isLocked
+                ? <span style={{ fontSize: "8px", color: "rgba(255,255,255,0.18)", letterSpacing: "0.1em" }}>⊘ LOCKED</span>
+                : (
+                  <>
+                    <span style={{
+                      width: 4, height: 4, borderRadius: "50%", display: "inline-block",
+                      background: isReady ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0.15)",
+                      boxShadow: isReady ? "0 0 6px rgba(255,255,255,0.4)" : "none",
+                    }} />
+                    <span style={{ fontSize: "7px", color: "rgba(255,255,255,0.25)", letterSpacing: "0.1em" }}>
+                      {mod.status}
+                    </span>
+                  </>
+                )
+              }
             </div>
           </div>
 
-          {/* Module name */}
+          {/* Label */}
           <p style={{
-            fontSize: "12px", color: "rgba(255,255,255,0.88)", letterSpacing: "0.06em",
-            marginBottom: "6px", fontWeight: "600", margin: "0 0 6px 0",
+            fontSize: "12px",
+            color: isLocked ? "rgba(255,255,255,0.30)" : "rgba(255,255,255,0.88)",
+            letterSpacing: "0.06em",
+            fontWeight: "600",
+            margin: "0 0 6px 0",
           }}>
             {mod.label}
           </p>
 
-          {/* Description */}
-          <p style={{
-            fontSize: "10px", color: "rgba(255,255,255,0.35)", lineHeight: "1.55",
-            margin: "0 0 2px 0",
-          }}>
-            {mod.description}
-          </p>
+          {/* Description — hidden on locked cards */}
+          {!isLocked && (
+            <p style={{ fontSize: "10px", color: "rgba(255,255,255,0.35)", lineHeight: "1.55", margin: "0 0 2px 0" }}>
+              {mod.description}
+            </p>
+          )}
+          {isLocked && (
+            <p style={{ fontSize: "9px", color: "rgba(255,255,255,0.18)", lineHeight: "1.5", margin: 0, fontStyle: "italic" }}>
+              Not applicable for this domain.
+            </p>
+          )}
 
-          {/* Detail list */}
-          {mod.detail && (
+          {/* Detail tags */}
+          {!isLocked && mod.detail && (
             <div style={{
               marginTop: "8px", paddingTop: "8px",
               borderTop: "0.5px solid rgba(255,255,255,0.08)",
               display: "flex", flexWrap: "wrap", gap: "4px 12px",
             }}>
               {mod.detail.map((item, i) => (
-                <span key={i} style={{
-                  fontSize: "8px", color: "rgba(255,255,255,0.22)",
-                  letterSpacing: "0.06em",
-                }}>
-                  ◇ {item}
-                </span>
+                <span key={i} style={{ fontSize: "8px", color: "rgba(255,255,255,0.22)", letterSpacing: "0.06em" }}>◇ {item}</span>
               ))}
             </div>
           )}
 
-          {/* Hover action */}
+          {/* Hover CTA */}
           {isReady && isHovered && (
-            <p style={{
-              fontSize: "9px", color: "rgba(255,255,255,0.50)", marginTop: "10px",
-              letterSpacing: "0.08em", margin: "10px 0 0 0",
-            }}>
+            <p style={{ fontSize: "9px", color: "rgba(255,255,255,0.50)", letterSpacing: "0.08em", margin: "10px 0 0 0" }}>
               → CLICK TO OPEN MODULE
             </p>
           )}
         </div>
 
-        {/* Dimension annotation — bottom-right corner */}
+        {/* Dimension annotation */}
         <span style={{
           position: "absolute", bottom: -14, right: 4,
           fontSize: "7px", color: "rgba(255,255,255,0.10)", letterSpacing: "0.1em",
@@ -532,6 +553,50 @@ function ExplodedCard({ mod, style, isHovered, onHover, onClick, refCallback }) 
           {mod.side === "left" ? `←  ${style.width}px` : `${style.width}px  →`}
         </span>
       </div>
+    </div>
+  )
+}
+
+// ─── DOMAIN BANNER ────────────────────────────────────────────────────────────
+// Shown below the SYSTEMFORGE title when Groq classify has run
+function DomainBanner({ domain }) {
+  const meta = DOMAIN_META[domain] || DOMAIN_META.mixed
+  return (
+    <div
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: "8px",
+        marginTop: "10px",
+        padding: "4px 14px",
+        border: `1px solid ${meta.border}`,
+        background: meta.bg,
+        borderRadius: "2px",
+        animation: "domainFadeIn 0.5s ease forwards",
+      }}
+    >
+      <span style={{
+        width: 5, height: 5, borderRadius: "50%",
+        background: meta.color,
+        boxShadow: `0 0 8px ${meta.color}`,
+        flexShrink: 0,
+        display: "inline-block",
+      }} />
+      <span style={{
+        fontSize: "9px",
+        color: meta.color,
+        letterSpacing: "0.20em",
+        fontFamily: "monospace",
+        fontWeight: 600,
+      }}>
+        {meta.label}
+      </span>
+      <style>{`
+        @keyframes domainFadeIn {
+          from { opacity: 0; transform: translateY(-4px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
     </div>
   )
 }
