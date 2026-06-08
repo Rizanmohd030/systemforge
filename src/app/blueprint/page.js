@@ -10,6 +10,7 @@ import SystemArchitecture from "@/components/SystemArchitecture"
 import BuildRoadmap from "@/components/BuildRoadmap"
 import PromptBuilder from "@/components/PromptBuilder"
 import MarketResearch from "@/components/MarketResearch"
+import ExportButton from "@/components/ExportButton"
 import { useProjectStore } from "@/store/projectStore"
 
 const nothingFont = Space_Grotesk({
@@ -253,6 +254,11 @@ export default function BlueprintPage() {
           <DomainBanner domain={moduleConfig.domain} />
         )}
         */}
+      </div>
+
+      {/* EXPORT BUTTON — top right */}
+      <div style={{ position: "absolute", top: "72px", right: "60px", zIndex: 30 }}>
+        <ExportButton />
       </div>
 
       {!activeModule ? (

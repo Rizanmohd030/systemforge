@@ -6,6 +6,7 @@ import { NextResponse } from "next/server"
 
 import { buildTechStackPrompt } from "@/lib/prompts"
 import { getGeminiKey } from "@/lib/keyManager"
+import { optionalAuth } from "@/lib/authMiddleware"
 
 // ─── STEP 1: Define the Schema (Zod) ─────────────────────────
 // This schema matches the requirements of the TechStack component.
@@ -26,7 +27,9 @@ const parser = StructuredOutputParser.fromZodSchema(techStackSchema)
 
 export async function POST(request) {
     try {
-        const { context, feedback } = await request.json()
+        const { feedback } = await request.json()
+        const auth = await optionalAuth(request)
+        const userId = auth.session?.user?.dbUserId || auth.userId
 
         const model = new ChatGoogleGenerativeAI({
             model: "gemini-2.5-flash",
@@ -34,7 +37,7 @@ export async function POST(request) {
             temperature: 0, // 0 = Most reliable for structured data
         })
 
-        const templateStr = buildTechStackPrompt(context)
+        const templateStr = await buildTechStackPrompt(userId)
         const template = new PromptTemplate({
             template: templateStr + (feedback ? `\nUser constraints/feedback: "${feedback}"` : ""),
             inputVariables: [],

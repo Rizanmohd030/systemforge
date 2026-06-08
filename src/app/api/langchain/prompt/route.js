@@ -5,6 +5,7 @@ import { z } from "zod"
 import { NextResponse } from "next/server"
 import { buildPromptBuilderPrompt } from "@/lib/prompts"
 import { getGeminiKey } from "@/lib/keyManager"
+import { optionalAuth } from "@/lib/authMiddleware"
 
 // ─── SCHEMA ──────────────────────────────────────────────────
 const promptSchema = z.array(z.object({
@@ -18,7 +19,9 @@ const parser = StructuredOutputParser.fromZodSchema(promptSchema)
 
 export async function POST(request) {
     try {
-        const { context } = await request.json()
+        const { feedback } = await request.json().catch(() => ({}))
+        const auth = await optionalAuth(request)
+        const userId = auth.session?.user?.dbUserId || auth.userId
 
         const model = new ChatGoogleGenerativeAI({
             model: "gemini-2.5-flash",
@@ -26,7 +29,7 @@ export async function POST(request) {
             temperature: 0,
         })
 
-        const templateStr = buildPromptBuilderPrompt(context)
+        const templateStr = await buildPromptBuilderPrompt(userId)
         const template = new PromptTemplate({
             template: templateStr,
             inputVariables: [],

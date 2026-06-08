@@ -6,6 +6,7 @@ import { NextResponse } from "next/server"
 
 import { buildSystemDesignPrompt } from "@/lib/prompts"
 import { getGeminiKey } from "@/lib/keyManager"
+import { optionalAuth } from "@/lib/authMiddleware"
 
 // ─── SCHEMA ──────────────────────────────────────────────────
 const systemDesignSchema = z.object({
@@ -43,7 +44,9 @@ const parser = StructuredOutputParser.fromZodSchema(systemDesignSchema)
 
 export async function POST(request) {
     try {
-        const { context, feedback } = await request.json()
+        const { feedback } = await request.json()
+        const auth = await optionalAuth(request)
+        const userId = auth.session?.user?.dbUserId || auth.userId
 
         const model = new ChatGoogleGenerativeAI({
             model: "gemini-2.5-flash",
@@ -51,7 +54,7 @@ export async function POST(request) {
             temperature: 0,
         })
 
-        let templateStr = buildSystemDesignPrompt(context)
+        let templateStr = await buildSystemDesignPrompt(userId)
         
         // Append feedback to prompt if provided
         if (feedback && feedback.trim()) {
