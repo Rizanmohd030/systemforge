@@ -9,6 +9,7 @@ import { useProjectStore } from "@/store/projectStore"
 const BOOT_LINES = [
   "> INITIALIZING SYSTEMFORGE...",
   "> LOADING AI MODULES...",
+  "> GROQ + GEMINI DUAL ROUTING ACTIVE...",
   "> PREPARING BLUEPRINT ENGINE...",
   "> SYSTEM READY.",
 ]
@@ -23,7 +24,7 @@ const EXAMPLES = [
 
 export default function Home() {
   const router = useRouter()
-  const { setIdea: setStoreIdea } = useProjectStore()
+  const { setIdea: setStoreIdea, setBlueprintV1, setModuleConfig } = useProjectStore()
 
   // ── Boot sequence state ───────────────────────────────────────────────────
   const [bootLines, setBootLines] = useState([])
@@ -86,14 +87,42 @@ export default function Home() {
 
 
   // ── ENTER KEY ─────────────────────────────────────────────────────────────
-  const handleKeyDown = (e) => {
+  const handleKeyDown = async (e) => {
     if (e.key === "Enter") {
       e.preventDefault()
       const value = inputRef.current?.value?.trim()
       if (!value || isSubmitting) return
+
+      // Immediately save raw idea to store + begin submit UI
       setStoreIdea(value)
       setIsSubmitting(true)
-      setTimeout(() => router.push("/blueprint"), 1200)
+
+      try {
+        // ── GROQ: classify domain + expand Blueprint V1 ────────────────────
+        const res = await fetch("/api/groq/classify", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ rawIdea: value }),
+        })
+
+        if (res.ok) {
+          const data = await res.json()
+          if (data.success) {
+            // Persist Blueprint V1 + module_config to Zustand (localStorage)
+            setBlueprintV1(data.blueprint_v1)
+            setModuleConfig(data.module_config)
+          }
+        } else {
+          // Non-fatal: log and continue without Blueprint V1
+          console.warn("[Groq classify] API error", res.status)
+        }
+      } catch (err) {
+        // Non-fatal: network/parse errors fall through gracefully
+        console.warn("[Groq classify] fetch failed:", err.message)
+      }
+
+      // Route to blueprint hub — Groq errors are non-blocking
+      router.push("/blueprint")
       return
     }
     setTimeout(syncFromInput, 0)
@@ -209,7 +238,8 @@ export default function Home() {
             {/* Submission transition */}
             {isSubmitting && (
               <>
-                <p className="mt-4 text-green-300">&gt; ANALYZING IDEA...</p>
+                <p className="mt-4 text-green-300">&gt; ROUTING TO GROQ — CLASSIFYING IDEA...</p>
+                <p className="text-green-300">&gt; EXPANDING BLUEPRINT V1...</p>
                 <p className="text-green-300">&gt; LOADING BLUEPRINT WORKSPACE...</p>
                 <span className="terminal-cursor" style={{ marginTop: 8, display: "inline-block" }} />
               </>

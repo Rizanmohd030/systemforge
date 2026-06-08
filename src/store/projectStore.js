@@ -10,6 +10,8 @@ const defaultContext = {
     architecture: null,
     roadmap: null,
     prompts: null,
+    blueprintV1: null,       // From Groq classify — Blueprint V1 expansion
+    moduleConfig: null,      // From Groq classify — controls which Gemini modules are enabled
 }
 
 export const useProjectStore = create(
@@ -65,6 +67,33 @@ export const useProjectStore = create(
                 get().validate()
             },
 
+            /**
+             * Store the Groq-generated Blueprint V1 payload.
+             * Called after /api/groq/classify succeeds and Zod validates the shape.
+             * Clears all derived Gemini module outputs so they regenerate fresh.
+             */
+            setBlueprintV1: (blueprintV1) => {
+                set({
+                    blueprintV1,
+                    // Clear derived Gemini outputs — they depend on the new blueprint
+                    refinement: null,
+                    systemDesign: null,
+                    stack: null,
+                    architecture: null,
+                    roadmap: null,
+                    prompts: null,
+                })
+                get().validate()
+            },
+
+            /**
+             * Store the module_config returned by Groq classify.
+             * Drives which module cards are active on the blueprint hub.
+             */
+            setModuleConfig: (moduleConfig) => {
+                set({ moduleConfig })
+            },
+
             // Full Context Getter
             getCurrentContext: () => {
                 const state = get()
@@ -97,7 +126,9 @@ export const useProjectStore = create(
                 stack: state.stack,
                 architecture: state.architecture,
                 roadmap: state.roadmap,
-                prompts: state.prompts 
+                prompts: state.prompts,
+                blueprintV1: state.blueprintV1,
+                moduleConfig: state.moduleConfig,
             }), // Only save data, not functions/processing state
         }
     )
